@@ -119,6 +119,15 @@ Keyboard_Config parse_keyboard_config(const std::filesystem::path& json_path) {
         }
     }
 
+    // Parse optional attached device (e.g. MK20 macropad)
+    if (data.contains("device")) {
+        const auto& dev = data["device"];
+        config.device = Keyboard_Config::Device_Config{
+            .type = dev.value("type", ""),
+            .port = dev.value("port", "auto"),
+        };
+    }
+
     return config;
 }
 
@@ -185,6 +194,15 @@ Keyboard_Config parse_keyboard_config_string(const std::string& json_string) {
 
             config.layers.push_back(std::move(layer));
         }
+    }
+
+    // Parse optional attached device (e.g. MK20 macropad)
+    if (data.contains("device")) {
+        const auto& dev = data["device"];
+        config.device = Keyboard_Config::Device_Config{
+            .type = dev.value("type", ""),
+            .port = dev.value("port", "auto"),
+        };
     }
 
     return config;

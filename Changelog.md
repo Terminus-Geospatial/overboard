@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.16.0] - 2026-10-17
+
+### Added
+- MK20 macropad support: `ovb::mpad` serial protocol client, `hal/mk20`
+  input + `I_Keymap_View` presenter with per-layer theme upload and
+  instant `reload_theme` switching, encoder HID bindings (F13–F18)
+- Optional `"device"` block in `keyboard.json` and the
+  `OVB_KEYBOARD_CONFIG` CMake option; `data/configs/mk20/` is the SDL /
+  Pi Zero default, `th33` stays selectable
+- SDL drives the physical pad on POSIX hosts (LCD-height window when
+  connected, on-screen panel as fallback); F16–F24 on SDL and evdev
+
+### Changed
+- Pi Zero reserves no on-screen keymap region (`KBD_HEIGHT=0`)
+- Serial/file APIs use `std::span`/`std::vector` over pointer+length
+- Reduced `LOG_TRACE` step-marker noise across init/teardown paths
+
+### Fixed
+- ~0.5s "Slow frame" stalls each second on macOS: `get_info` cached
+  (30s TTL), adapter probes memoized, redundant per-second header
+  refresh removed
+
+---
+
 ## [0.15.0] - 2026-08-30
 
 ### Added

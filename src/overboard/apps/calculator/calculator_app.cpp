@@ -119,11 +119,9 @@ void Calculator_App::set_overlay_callbacks(Overlay_Push_Cb push, Overlay_Pop_Cb 
 /*          Destructor         */
 /*******************************/
 Calculator_App::~Calculator_App() {
-    LOG_TRACE("Calculator_App: destructor");
     if (m_impl->container) {
         deactivate();
     }
-    LOG_TRACE("Calculator_App: destructor complete");
 }
 
 /*******************************/
@@ -256,20 +254,12 @@ void Calculator_App::deactivate() {
     // The panel container parent will clean up the LVGL tree; just null our
     // pointer and reset the C++ wrappers so they don't try to touch it later.
     m_impl->container = nullptr;
-    LOG_TRACE("Calculator_App: resetting footer");
     m_impl->footer.reset();
-    LOG_TRACE("Calculator_App: footer reset");
-    LOG_TRACE("Calculator_App: resetting header");
     m_impl->header.reset();
-    LOG_TRACE("Calculator_App: header reset");
     if (m_impl->lcd) {
-        LOG_TRACE("Calculator_App: tearing down LCD_Section");
         m_impl->lcd->teardown();
-        LOG_TRACE("Calculator_App: resetting LCD_Section");
         m_impl->lcd.reset();
-        LOG_TRACE("Calculator_App: LCD_Section reset");
     }
-    LOG_TRACE("Calculator_App: deactivate complete");
 }
 
 /*******************************/

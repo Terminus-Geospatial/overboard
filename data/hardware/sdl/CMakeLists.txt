@@ -14,12 +14,17 @@ if(SDL2_INCLUDE_DIRS)
     target_include_directories(lvgl SYSTEM PRIVATE ${SDL2_INCLUDE_DIRS})
 endif()
 
+# Keyboard layout config — MK20 macropad by default; override for other
+# layouts, e.g. -DOVB_KEYBOARD_CONFIG=data/configs/th33/
+set(OVB_KEYBOARD_CONFIG "data/configs/mk20/" CACHE STRING
+    "Keyboard config directory (relative to repo root)")
+
 # Set up SDL-specific compile definitions
 set(HARDWARE_COMPILE_DEFINITIONS
     TARGET_SDL=1
     SIMULATOR=1
     SHOW_KEYBOARD_UI=1
-    DEFAULT_CONFIG_PATH="data/configs/th33/"
+    DEFAULT_CONFIG_PATH="${OVB_KEYBOARD_CONFIG}"
     EMBEDDED_JSON=1
 )
 
@@ -61,7 +66,7 @@ configure_file(
 )
 
 # Embed keyboard.json as C++ resource
-file(READ ${CMAKE_SOURCE_DIR}/data/configs/th33/keyboard.json JSON_CONTENT)
+file(READ ${CMAKE_SOURCE_DIR}/${OVB_KEYBOARD_CONFIG}keyboard.json JSON_CONTENT)
 configure_file(
     ${CMAKE_SOURCE_DIR}/templates/embedded_json.hpp.in
     ${CMAKE_BINARY_DIR}/src/overboard/resources/embedded_json.hpp

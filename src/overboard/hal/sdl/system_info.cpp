@@ -34,6 +34,21 @@ SDL_System_Info::SDL_System_Info() {
 /*     Get System Info      */
 /****************************/
 System_Info SDL_System_Info::get_info() {
+    std::lock_guard lk( m_cache_mtx );
+    if (m_info_cached &&
+        std::chrono::steady_clock::now() - m_info_cached_at < INFO_CACHE_TTL) {
+        return m_info_cache;
+    }
+    m_info_cache     = collect_info();
+    m_info_cached_at = std::chrono::steady_clock::now();
+    m_info_cached    = true;
+    return m_info_cache;
+}
+
+/****************************/
+/*      Collect Info        */
+/****************************/
+System_Info SDL_System_Info::collect_info() {
     System_Info info;
 
     // CPU temperature
@@ -50,8 +65,12 @@ System_Info SDL_System_Info::get_info() {
     // USB - not meaningfully queryable in SDL context
     info.usb = std::nullopt;
 
-    // Bluetooth - use OS utilities
-    if (has_bluetooth()) {
+    // Bluetooth — m_cache_mtx is already held by get_info(); reuse the
+    // memoized capability probes rather than re-running system_profiler.
+    if (!m_has_bt_cache) {
+        m_has_bt_cache = ovb::hal::sdl::has_bluetooth();
+    }
+    if (*m_has_bt_cache) {
         System_Info::BT_Status bt;
         bt.powered = true;
         bt.connected = get_bluetooth_connected();
@@ -60,8 +79,11 @@ System_Info SDL_System_Info::get_info() {
         info.bluetooth = std::nullopt;
     }
 
-    // WiFi - use OS utilities
-    if (has_wifi()) {
+    // WiFi - same memoized capability probe
+    if (!m_has_wifi_cache) {
+        m_has_wifi_cache = ovb::hal::sdl::has_wifi();
+    }
+    if (*m_has_wifi_cache) {
         auto wifi_status = get_wifi_status();
         if (wifi_status) {
             System_Info::WiFi_Status wifi;
@@ -119,14 +141,22 @@ bool SDL_System_Info::has_usb() const {
 /*          Check if Bluetooth is available     */
 /************************************************/
 bool SDL_System_Info::has_bluetooth() const {
-    return ovb::hal::sdl::has_bluetooth();
+    std::lock_guard lk( m_cache_mtx );
+    if (!m_has_bt_cache) {
+        m_has_bt_cache = ovb::hal::sdl::has_bluetooth();
+    }
+    return *m_has_bt_cache;
 }
 
 /************************************************/
 /*          Check if Wifi is available          */
 /************************************************/
 bool SDL_System_Info::has_wifi() const {
-    return ovb::hal::sdl::has_wifi();
+    std::lock_guard lk( m_cache_mtx );
+    if (!m_has_wifi_cache) {
+        m_has_wifi_cache = ovb::hal::sdl::has_wifi();
+    }
+    return *m_has_wifi_cache;
 }
 
 /*********************************************/

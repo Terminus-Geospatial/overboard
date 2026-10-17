@@ -40,6 +40,15 @@ static constexpr std::array<core::Input_Key, SDL_NUM_SCANCODES> SCANCODES_TO_INP
     table[SDL_SCANCODE_F13] = core::Input_Key::F13;
     table[SDL_SCANCODE_F14] = core::Input_Key::F14;
     table[SDL_SCANCODE_F15] = core::Input_Key::F15;
+    table[SDL_SCANCODE_F16] = core::Input_Key::F16;
+    table[SDL_SCANCODE_F17] = core::Input_Key::F17;
+    table[SDL_SCANCODE_F18] = core::Input_Key::F18;
+    table[SDL_SCANCODE_F19] = core::Input_Key::F19;
+    table[SDL_SCANCODE_F20] = core::Input_Key::F20;
+    table[SDL_SCANCODE_F21] = core::Input_Key::F21;
+    table[SDL_SCANCODE_F22] = core::Input_Key::F22;
+    table[SDL_SCANCODE_F23] = core::Input_Key::F23;
+    table[SDL_SCANCODE_F24] = core::Input_Key::F24;
 
     // Top row digits
     table[SDL_SCANCODE_0] = core::Input_Key::KEY_0;

@@ -83,6 +83,23 @@ else()
     message(FATAL_ERROR "Unknown TARGET_DEVICE: ${TARGET_DEVICE}")
 endif()
 
+# ── MK20 Macropad Support ────────────────────────────────────────────────────
+# POSIX serial (termios) — enabled for SDL dev targets and Pi Zero.
+# PICOCALC (bare-metal RP2350) and WASM are excluded.
+if(TARGET_DEVICE STREQUAL "SDL" OR TARGET_DEVICE STREQUAL "PICOSDL" OR TARGET_DEVICE STREQUAL "ZERO")
+    list(APPEND HARDWARE_SOURCES
+        src/overboard/hal/mk20/input.cpp
+        src/overboard/hal/mk20/keymap.cpp
+        src/overboard/mpad/device.cpp
+        src/overboard/mpad/protocol.cpp
+        src/overboard/mpad/serial_port.cpp
+        src/overboard/mpad/theme.cpp
+    )
+    list(APPEND HARDWARE_COMPILE_DEFINITIONS OVB_HAS_MK20=1)
+else()
+    list(APPEND HARDWARE_COMPILE_DEFINITIONS OVB_HAS_MK20=0)
+endif()
+
 # ── Common Sources ────────────────────────────────────────────────────────────────
 set(CORE_SOURCES
     src/overboard/core/config.cpp

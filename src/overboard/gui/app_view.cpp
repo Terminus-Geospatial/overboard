@@ -79,12 +79,10 @@ App_View::App_View( lv_obj_t*                      root,
     m_impl->m_layers      = &layers;
     m_impl->m_settings    = settings;
     m_impl->m_system_info = &system_info;
-    LOG_TRACE("App_View: Applying baseline screen styling");
     lv_obj_set_style_pad_all(root, 0, 0);
     lv_obj_set_style_border_width(root, 0, 0);
     lv_obj_set_style_bg_color(root, lvgl_color(LVGL_COLOR_BG_SCREEN), LV_PART_MAIN);
 
-    LOG_TRACE("App_View: Creating panel container");
     m_impl->m_panel_container = lv_obj_create(root);
     lv_obj_set_size(m_impl->m_panel_container, hal::LCD_WIDTH, hal::LCD_HEIGHT);
     lv_obj_align(m_impl->m_panel_container, LV_ALIGN_TOP_LEFT, 0, 0);
@@ -94,7 +92,6 @@ App_View::App_View( lv_obj_t*                      root,
     lv_obj_set_style_radius(m_impl->m_panel_container, 0, LV_PART_MAIN);
     lv_obj_set_scrollable(m_impl->m_panel_container, false);
 
-    LOG_TRACE("App_View: Setting up Panel_Manager");
     m_impl->m_panels = std::make_unique<Panel_Manager>(m_impl->m_panel_container);
 
     // Create app registry and register all apps

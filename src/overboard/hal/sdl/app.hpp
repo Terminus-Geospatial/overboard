@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <vector>
 
 // Project Libraries
@@ -23,6 +24,7 @@
 #include <overboard/core/keymap.hpp>
 #include <overboard/core/layer_manager.hpp>
 #include <overboard/gui/app_view.hpp>
+#include <overboard/gui/i_keymap_view.hpp>
 #include <overboard/gui/key_mapping_info.hpp>
 #include <overboard/hal/display_config.hpp>
 #include <overboard/hal/i_app.hpp>
@@ -30,7 +32,14 @@
 #include <overboard/hal/sdl/display.hpp>
 #include <overboard/hal/sdl/input.hpp>
 #include <overboard/hal/sdl/system_info.hpp>
+#include <overboard/io/keyboard_config.hpp>
 #include <overboard/math/calc_engine.hpp>
+
+#if OVB_HAS_MK20
+#include <overboard/hal/mk20/input.hpp>
+#include <overboard/hal/mk20/keymap.hpp>
+#include <overboard/mpad/device.hpp>
+#endif
 
 namespace ovb::hal::sdl {
 
@@ -137,6 +146,27 @@ class SDL_App : public I_App {
         /// @brief Interactive key mapping info panel (in main window below LCD)
         /// Declared before m_view so it is destroyed after m_view (reverse order)
         std::unique_ptr<gui::Key_Mapping_Info> m_key_mapping_info;
+
+        /// @brief Active keymap presenter — on-screen panel or MK20 device
+        gui::I_Keymap_View*                   m_keymap_view = nullptr;
+
+        /// @brief Declared attached device from keyboard.json (if any)
+        std::optional<io::Keyboard_Config::Device_Config> m_device_config;
+
+#if OVB_HAS_MK20
+        // MK20 members declared before m_view; destruction order is
+        // reverse declaration: keymap → input → device (reader thread
+        // joined last, after callbacks can no longer fire).
+
+        /// @brief MK20 macropad connection (input + presenter share it)
+        std::shared_ptr<mpad::Device>         m_mk20_device;
+
+        /// @brief MK20 serial input source
+        std::unique_ptr<mk20::Mk20_Input>     m_mk20_input;
+
+        /// @brief MK20 keymap presenter (owns the device theme state)
+        std::unique_ptr<mk20::Mk20_Keymap>    m_mk20_keymap;
+#endif
 
         /// @brief LVGL application view (LCD + panel system)
         /// Declared after m_display so it is destroyed first (reverse order),

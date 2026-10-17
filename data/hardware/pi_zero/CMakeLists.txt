@@ -37,11 +37,16 @@ endif()
 message(STATUS "DRM library found: ${DRM_LIBRARY}")
 message(STATUS "GBM library found: ${GBM_LIBRARY}")
 
+# Keyboard layout config — MK20 macropad by default; override for other
+# layouts, e.g. -DOVB_KEYBOARD_CONFIG=data/configs/th33/
+set(OVB_KEYBOARD_CONFIG "data/configs/mk20/" CACHE STRING
+    "Keyboard config directory (relative to repo root)")
+
 # Set up Pi Zero-specific compile definitions
 set(HARDWARE_COMPILE_DEFINITIONS
     TARGET_ZERO=1
     SIMULATOR=0
-    DEFAULT_CONFIG_PATH="data/configs/th33/"
+    DEFAULT_CONFIG_PATH="${OVB_KEYBOARD_CONFIG}"
     EMBEDDED_JSON=1
     LV_USE_SDL=0
     LV_USE_LINUX_DRM=1
@@ -67,10 +72,12 @@ set(HARDWARE_INCLUDE_DIRS
 
 # Display dimensions for Pi Zero (native portrait after 270° rotation)
 # Physical display: 1024x600 landscape -> logical: 600x1024 portrait
+# KBD_HEIGHT=0 — the MK20 macropad is the keymap presenter; the app UI
+# fills the whole framebuffer.
 set(DISPLAY_FULL_WIDTH  600)
 set(DISPLAY_FULL_HEIGHT 1024)
 set(DISPLAY_KBD_WIDTH   600)
-set(DISPLAY_KBD_HEIGHT  400)
+set(DISPLAY_KBD_HEIGHT  0)
 set(DISPLAY_KBD_WIN_HEIGHT 0)
 set(DISPLAY_PREVIEW_MAX_WIDTH  584)
 set(DISPLAY_PREVIEW_MAX_HEIGHT 120)
@@ -88,7 +95,7 @@ configure_file(
 )
 
 # Embed keyboard.json as C++ resource
-file(READ ${CMAKE_SOURCE_DIR}/data/configs/th33/keyboard.json JSON_CONTENT)
+file(READ ${CMAKE_SOURCE_DIR}/${OVB_KEYBOARD_CONFIG}keyboard.json JSON_CONTENT)
 configure_file(
     ${CMAKE_SOURCE_DIR}/templates/embedded_json.hpp.in
     ${CMAKE_BINARY_DIR}/src/overboard/resources/embedded_json.hpp

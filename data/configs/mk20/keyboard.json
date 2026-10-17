@@ -1,0 +1,110 @@
+{
+  "name": "MK20",
+  "description": "Waveshare MK20 macropad — 20 LCD keys (5x4) + 2 encoders",
+  "device": {
+    "type": "mk20",
+    "port": "auto"
+  },
+  "layout": {
+    "key_width": 40,
+    "key_height": 40,
+    "key_spacing": 2,
+    "origin_x": 8,
+    "origin_y": 6
+  },
+  "keys": {
+    "0":  { "label": "K1",  "input_key": "NONE", "position": { "x": 0,   "y": 0.25, "w": 1, "h": 1 } },
+    "1":  { "label": "K2",  "input_key": "NONE", "position": { "x": 1,   "y": 0.25, "w": 1, "h": 1 } },
+    "2":  { "label": "K3",  "input_key": "NONE", "position": { "x": 2,   "y": 0.25, "w": 1, "h": 1 } },
+    "3":  { "label": "K4",  "input_key": "NONE", "position": { "x": 3,   "y": 0.25, "w": 1, "h": 1 } },
+    "4":  { "label": "K5",  "input_key": "NONE", "position": { "x": 4,   "y": 0.25, "w": 1, "h": 1 } },
+    "5":  { "label": "K6",  "input_key": "NONE", "position": { "x": 0,   "y": 1.25, "w": 1, "h": 1 } },
+    "6":  { "label": "K7",  "input_key": "NONE", "position": { "x": 1,   "y": 1.25, "w": 1, "h": 1 } },
+    "7":  { "label": "K8",  "input_key": "NONE", "position": { "x": 2,   "y": 1.25, "w": 1, "h": 1 } },
+    "8":  { "label": "K9",  "input_key": "NONE", "position": { "x": 3,   "y": 1.25, "w": 1, "h": 1 } },
+    "9":  { "label": "K10", "input_key": "NONE", "position": { "x": 4,   "y": 1.25, "w": 1, "h": 1 } },
+    "10": { "label": "K11", "input_key": "NONE", "position": { "x": 0,   "y": 2.25, "w": 1, "h": 1 } },
+    "11": { "label": "K12", "input_key": "NONE", "position": { "x": 1,   "y": 2.25, "w": 1, "h": 1 } },
+    "12": { "label": "K13", "input_key": "NONE", "position": { "x": 2,   "y": 2.25, "w": 1, "h": 1 } },
+    "13": { "label": "K14", "input_key": "NONE", "position": { "x": 3,   "y": 2.25, "w": 1, "h": 1 } },
+    "14": { "label": "K15", "input_key": "NONE", "position": { "x": 4,   "y": 2.25, "w": 1, "h": 1 } },
+    "15": { "label": "K16", "input_key": "NONE", "position": { "x": 0,   "y": 3.25, "w": 1, "h": 1 } },
+    "16": { "label": "K17", "input_key": "NONE", "position": { "x": 1,   "y": 3.25, "w": 1, "h": 1 } },
+    "17": { "label": "K18", "input_key": "NONE", "position": { "x": 2,   "y": 3.25, "w": 1, "h": 1 } },
+    "18": { "label": "K19", "input_key": "NONE", "position": { "x": 3,   "y": 3.25, "w": 1, "h": 1 } },
+    "19": { "label": "K20", "input_key": "NONE", "position": { "x": 4,   "y": 3.25, "w": 1, "h": 1 } },
+
+    "20": { "label": "L\u25CF", "input_key": "F17", "position": { "x": 1,   "y": 4.5, "w": 1, "h": 1 } },
+    "21": { "label": "L\u25C0", "input_key": "F14", "position": { "x": 0,   "y": 4.5, "w": 1, "h": 1 } },
+    "22": { "label": "L\u25B6", "input_key": "F13", "position": { "x": 2,   "y": 4.5, "w": 1, "h": 1 } },
+    "23": { "label": "R\u25CF", "input_key": "F18", "position": { "x": 4,   "y": 4.5, "w": 1, "h": 1 } },
+    "24": { "label": "R\u25C0", "input_key": "F16", "position": { "x": 3,   "y": 4.5, "w": 1, "h": 1 } },
+    "25": { "label": "R\u25B6", "input_key": "F15", "position": { "x": 5,   "y": 4.5, "w": 1, "h": 1 } }
+  },
+  "layers": [
+    {
+      "name": "Basic",
+      "keys": {
+        "0":  { "code": "ESCAPE",      "label": "Esc" },
+        "1":  { "code": "PAREN_OPEN",  "label": "(" },
+        "2":  { "code": "PAREN_CLOSE", "label": ")" },
+        "3":  { "code": "BACKSPACE",   "label": "Bsp" },
+        "4":  { "code": "DIGIT_7",     "label": "7" },
+        "5":  { "code": "DIGIT_8",     "label": "8" },
+        "6":  { "code": "DIGIT_9",     "label": "9" },
+        "7":  { "code": "DIVIDE",      "label": "/" },
+        "8":  { "code": "DIGIT_4",     "label": "4" },
+        "9":  { "code": "DIGIT_5",     "label": "5" },
+        "10": { "code": "DIGIT_6",     "label": "6" },
+        "11": { "code": "MULTIPLY",    "label": "*" },
+        "12": { "code": "DIGIT_1",     "label": "1" },
+        "13": { "code": "DIGIT_2",     "label": "2" },
+        "14": { "code": "DIGIT_3",     "label": "3" },
+        "15": { "code": "SUBTRACT",    "label": "-" },
+        "16": { "code": "DIGIT_0",     "label": "0" },
+        "17": { "code": "DECIMAL",     "label": "." },
+        "18": { "code": "EVAL",        "label": "=" },
+        "19": { "code": "ADD",         "label": "+" },
+
+        "20": { "code": "GO_HOME_LAYER", "label": "Home" },
+        "21": { "code": "PREV_LAYER",    "label": "L<" },
+        "22": { "code": "NEXT_LAYER",    "label": "L>" },
+        "23": { "code": "EVAL",          "label": "=" },
+        "24": { "code": "CURSOR_LEFT",   "label": "R<" },
+        "25": { "code": "CURSOR_RIGHT",  "label": "R>" }
+      }
+    },
+    {
+      "name": "Scientific",
+      "keys": {
+        "0":  { "code": "ESCAPE",      "label": "Esc" },
+        "1":  { "code": "PAREN_OPEN",  "label": "(" },
+        "2":  { "code": "PAREN_CLOSE", "label": ")" },
+        "3":  { "code": "BACKSPACE",   "label": "Bsp" },
+        "4":  { "code": "SIN",         "label": "sin" },
+        "5":  { "code": "COS",         "label": "cos" },
+        "6":  { "code": "TAN",         "label": "tan" },
+        "7":  { "code": "SQRT",        "label": "sqrt" },
+        "8":  { "code": "ASIN",        "label": "asin" },
+        "9":  { "code": "ACOS",        "label": "acos" },
+        "10": { "code": "ATAN",        "label": "atan" },
+        "11": { "code": "POWER_N",     "label": "x^y" },
+        "12": { "code": "LN",          "label": "ln" },
+        "13": { "code": "LOG",         "label": "log" },
+        "14": { "code": "EXP",         "label": "e^x" },
+        "15": { "code": "POWER_2",     "label": "x^2" },
+        "16": { "code": "PI",          "label": "pi" },
+        "17": { "code": "EULER",       "label": "e" },
+        "18": { "code": "FACTORIAL",   "label": "!" },
+        "19": { "code": "RECIPROCAL",  "label": "1/x" },
+
+        "20": { "code": "GO_HOME_LAYER", "label": "Home" },
+        "21": { "code": "PREV_LAYER",    "label": "L<" },
+        "22": { "code": "NEXT_LAYER",    "label": "L>" },
+        "23": { "code": "EVAL",          "label": "=" },
+        "24": { "code": "CURSOR_LEFT",   "label": "R<" },
+        "25": { "code": "CURSOR_RIGHT",  "label": "R>" }
+      }
+    }
+  ]
+}

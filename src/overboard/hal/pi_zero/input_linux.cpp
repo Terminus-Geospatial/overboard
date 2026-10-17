@@ -113,6 +113,15 @@ static ovb::core::Input_Key linux_code_to_input_key(unsigned int code) {
         case 183: return core::Input_Key::F13;         // KEY_F13
         case 184: return core::Input_Key::F14;         // KEY_F14
         case 185: return core::Input_Key::F15;         // KEY_F15
+        case 186: return core::Input_Key::F16;         // KEY_F16
+        case 187: return core::Input_Key::F17;         // KEY_F17
+        case 188: return core::Input_Key::F18;         // KEY_F18
+        case 189: return core::Input_Key::F19;         // KEY_F19
+        case 190: return core::Input_Key::F20;         // KEY_F20
+        case 191: return core::Input_Key::F21;         // KEY_F21
+        case 192: return core::Input_Key::F22;         // KEY_F22
+        case 193: return core::Input_Key::F23;         // KEY_F23
+        case 194: return core::Input_Key::F24;         // KEY_F24
 
         // Digits (top row: 2-10, 11)
         case 11:  return core::Input_Key::KEY_0;

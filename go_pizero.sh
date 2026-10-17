@@ -36,7 +36,7 @@ if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo "To run on Pi Zero:"
     echo "  1. Copy build/calc_app to the Pi Zero"
     echo "  2. Ensure keyboard.json is in the same directory"
-    echo "  3. Run: ./calc_app --layout ./data/configs/th33 -v trace"
+    echo "  3. Run: ./calc_app --layout ./data/configs/mk20 -v trace"
 
     if ${PACKAGE_FLAG}; then
         echo ""

@@ -189,10 +189,8 @@ void Status_Page::activate(lv_obj_t* parent) {
         if (impl->digital_clock) {
             impl->digital_clock->update(tm_update);
         }
-
-        if (impl->header) {
-            impl->header->refresh();
-        }
+        // Header_Bar self-refreshes on its own 5s timer — refreshing it
+        // here would run the (expensive) system-info sweep every second.
     }, clock_update_ms, m_impl.get());
 
     // Separate timer for solar widget (slower update rate)
@@ -257,32 +255,22 @@ void Status_Page::deactivate() {
     hide_stats_popup();
     hide_about_popup();
     if (m_impl->clock_timer) {
-        LOG_TRACE("Status_Page: deleting clock timer");
         lv_timer_del(m_impl->clock_timer);
         m_impl->clock_timer = nullptr;
     }
     if (m_impl->solar_timer) {
-        LOG_TRACE("Status_Page: deleting solar timer");
         lv_timer_del(m_impl->solar_timer);
         m_impl->solar_timer = nullptr;
     }
-    LOG_TRACE("Status_Page: resetting solar_info");
     m_impl->solar_info.reset();
-    LOG_TRACE("Status_Page: resetting digital_clock");
     m_impl->digital_clock.reset();
-    LOG_TRACE("Status_Page: resetting analog_clock");
     m_impl->analog_clock.reset();
-    LOG_TRACE("Status_Page: resetting footer");
     m_impl->footer.reset();
-    LOG_TRACE("Status_Page: resetting header");
     m_impl->header.reset();
-    LOG_TRACE("Status_Page: resetting connections_popup");
     m_impl->connections_popup.reset();
     // The panel container parent will clean up the LVGL tree; just null our
     // pointer and reset the C++ wrappers so they don't try to touch it later.
-    LOG_TRACE("Status_Page: nulling container");
     m_impl->container = nullptr;
-    LOG_TRACE("Status_Page: deactivate complete");
 }
 
 /*******************************/

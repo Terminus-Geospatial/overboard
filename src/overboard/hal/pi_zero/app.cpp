@@ -9,6 +9,7 @@
 
 // C++ Standard Libraries
 #include <array>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
@@ -61,6 +62,7 @@ std::unique_ptr<PiZero_App> PiZero_App::create(const core::Grid_Layout& layout,
         std::cerr << "Failed to load keyboard config: " << e.what() << "\n";
         return nullptr;
     }
+    app->m_device_config = keyboard_config.device;
 
     // Build Input_Key -> layout key index map from keyboard_config.keys
     app->m_input_key_map.fill(-1);
@@ -79,6 +81,30 @@ std::unique_ptr<PiZero_App> PiZero_App::create(const core::Grid_Layout& layout,
         return nullptr;
     }
     return app;
+}
+
+/****************************/
+/*   Resolve MK20 serial    */
+/****************************/
+static std::string resolve_mk20_port(const std::string& configured) {
+    if (!configured.empty() && configured != "auto") {
+        return configured;
+    }
+    // Auto-discover: Linux exposes the device as ttyACM*/ttyUSB*
+    for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
+        const auto name = entry.path().filename().string();
+        if (name.starts_with("ttyACM") || name.starts_with("ttyUSB")) {
+            return entry.path().string();
+        }
+    }
+#if defined(__APPLE__)
+    for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
+        if (entry.path().filename().string().starts_with("cu.usbmodem")) {
+            return entry.path().string();
+        }
+    }
+#endif
+    return {};
 }
 
 /****************************/
@@ -123,49 +149,78 @@ bool PiZero_App::init() {
     };
     m_input = std::make_unique<Linux_Input>(input_devices);
 
-    // Create key mapping info panel below the LCD area
-#if SHOW_KEY_MAPPING
-    if constexpr (hal::KBD_HEIGHT > 0) {
-        LOG_DEBUG("PiZero_App: Creating Key_Mapping_Info panel");
-        m_key_mapping_info = std::make_unique<gui::Key_Mapping_Info>(
-            m_display->screen(), m_layout, m_layers,
-            hal::FULL_WIDTH, hal::KBD_HEIGHT,
-            [this](int key_index) { return m_view->get_active_panel_label(key_index); });
-        lv_obj_set_pos(m_key_mapping_info->container(), 0, hal::LCD_HEIGHT);
+    // Create keymap presenter — MK20 macropad if the config declares one,
+    // otherwise fall back to the on-screen key mapping panel.
+    m_keymap_view = nullptr;
 
-        // Make it interactive — wire button clicks to the same handler as physical keys
-        m_key_mapping_info->set_click_callback([this](int key_index) {
-            on_key_clicked(key_index, this);
-        });
-        LOG_DEBUG("PiZero_App: Key_Mapping_Info panel created");
+#if OVB_HAS_MK20
+    if (m_device_config && m_device_config->type == "mk20") {
+        const auto port = resolve_mk20_port(m_device_config->port);
+        if (!port.empty()) {
+            auto device = std::make_shared<mpad::Device>(port);
+            if (device->is_open()) {
+                m_mk20_input = std::make_unique<mk20::Mk20_Input>(device);
+                auto mk20_keymap = std::make_unique<mk20::Mk20_Keymap>(
+                    device, m_layout, m_layers,
+                    [this](int key_index) { return m_view->get_active_panel_label(key_index); });
+                m_keymap_view = mk20_keymap.get();
+                m_mk20_keymap = std::move(mk20_keymap);
+                m_mk20_device = std::move(device);
+                LOG_INFO("PiZero_App: MK20 macropad connected on ", port);
+            } else {
+                LOG_WARN("PiZero_App: MK20 configured but failed to open ", port);
+            }
+        } else {
+            LOG_WARN("PiZero_App: MK20 configured but no serial device found");
+        }
     }
+#endif
+
+#if SHOW_KEY_MAPPING
+    if (!m_keymap_view) {
+        if constexpr (hal::KBD_HEIGHT > 0) {
+            LOG_DEBUG("PiZero_App: Creating Key_Mapping_Info panel");
+            m_key_mapping_info = std::make_unique<gui::Key_Mapping_Info>(
+                m_display->screen(), m_layout, m_layers,
+                hal::FULL_WIDTH, hal::KBD_HEIGHT,
+                [this](int key_index) { return m_view->get_active_panel_label(key_index); });
+            lv_obj_set_pos(m_key_mapping_info->container(), 0, hal::LCD_HEIGHT);
+
+            // Make it interactive — wire button clicks to the same handler as physical keys
+            m_key_mapping_info->set_click_callback([this](int key_index) {
+                on_key_clicked(key_index, this);
+            });
+            m_keymap_view = m_key_mapping_info.get();
+            LOG_DEBUG("PiZero_App: Key_Mapping_Info panel created");
+        }
+    }
+#endif
 
     // Subscribe to layer changes
     m_layers.on_layer_change([this]([[maybe_unused]] int layer_index) {
-        if (m_key_mapping_info) {
-            m_key_mapping_info->update_layer();
+        if (m_keymap_view) {
+            m_keymap_view->update_layer();
         }
     });
 
     // Subscribe to panel changes to update labels and wire overlay callbacks
     m_view->set_panel_change_callback([this]([[maybe_unused]] gui::I_Panel* panel) {
-        if (m_key_mapping_info) {
-            m_key_mapping_info->update_layer();
+        if (m_keymap_view) {
+            m_keymap_view->update_layer();
         }
-        if (panel && m_key_mapping_info) {
+        if (panel && m_keymap_view) {
             panel->set_overlay_callbacks(
                 [this](const std::string& title, const std::vector<gui::I_Panel::Overlay_Key_Desc>& keys) {
-                    m_key_mapping_info->push_overlay(title, keys);
+                    m_keymap_view->push_overlay(title, keys);
                 },
                 [this]() {
-                    m_key_mapping_info->pop_overlay();
+                    m_keymap_view->pop_overlay();
                 });
         }
     });
 
     // Trigger callback manually for the initial panel (already activated during App_View construction)
     m_view->trigger_panel_change_callback();
-#endif
 
     // Set initial layer
     m_layers.set_layer(0);
@@ -203,6 +258,19 @@ void PiZero_App::run() {
                 }
             }
         }
+
+#if OVB_HAS_MK20
+        // Process MK20 serial key events — these carry resolved layout
+        // indices, so they bypass the Input_Key translation map.
+        if (m_mk20_input) {
+            while (m_mk20_input->poll(event)) {
+                if (event.kind == Key_Event_Kind::Action &&
+                    event.type == Key_Event_Type::Press) {
+                    handle_layout_key(event.key_index, -1);
+                }
+            }
+        }
+#endif
 
         // Update LVGL
         m_display->refresh();
@@ -251,10 +319,16 @@ void PiZero_App::handle_key(int key_index) {
     if (layout_idx < 0) {
         return;  // Unmapped physical key
     }
+    handle_layout_key(layout_idx, key_index);
+}
 
-    // Flash the key on the mapping panel for visual feedback
-    if (m_key_mapping_info) {
-        m_key_mapping_info->flash_key(layout_idx);
+/****************************/
+/*    Handle layout key     */
+/****************************/
+void PiZero_App::handle_layout_key(int layout_idx, int raw_input_key) {
+    // Flash the key on the active presenter for visual feedback
+    if (m_keymap_view) {
+        m_keymap_view->flash_key(layout_idx);
     }
 
     // Get the action from the current layer
@@ -279,8 +353,9 @@ void PiZero_App::handle_key(int key_index) {
 
     // If action is NONE, pass through as raw Input_Key (for F-keys, etc.)
     if (action == core::Action_Code::NONE) {
-        auto input_key = static_cast<core::Input_Key>(key_index);
-        m_view->handle_input_key(input_key);
+        if (raw_input_key >= 0) {
+            m_view->handle_input_key(static_cast<core::Input_Key>(raw_input_key));
+        }
         return;
     }
 
@@ -293,7 +368,7 @@ void PiZero_App::handle_key(int key_index) {
 /****************************/
 void PiZero_App::on_key_clicked(int key_index, void* user_data) {
     auto* app = static_cast<PiZero_App*>(user_data);
-    app->handle_key(key_index);
+    app->handle_layout_key(key_index, -1);
 }
 
 } // namespace ovb::hal::pi_zero

@@ -13,6 +13,7 @@
 // C++ Standard Libraries
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -74,6 +75,13 @@ struct Keyboard_Config {
 
     std::map<std::string, Key_Definition> keys;      ///< Key ID -> Definition
     std::vector<Layer> layers;                         ///< Layer definitions
+
+    /// @brief Optional attached input device (e.g. MK20 macropad)
+    struct Device_Config {
+        std::string type;    ///< Device type (e.g. "mk20")
+        std::string port;    ///< Serial port path, or "auto" to discover
+    };
+    std::optional<Device_Config> device;              ///< Present if config declares a device
 };
 
 /**

@@ -21,6 +21,7 @@
 // Project Libraries
 #include <overboard/core/keyboard_layout.hpp>
 #include <overboard/core/layer_manager.hpp>
+#include <overboard/gui/i_keymap_view.hpp>
 #include <overboard/gui/i_panel.hpp>
 
 namespace ovb::gui {
@@ -33,7 +34,7 @@ namespace ovb::gui {
  * Designed for macropad users who need to see dynamic key mappings,
  * and for simulator/browser users who can click keys to interact.
  */
-class Key_Mapping_Info {
+class Key_Mapping_Info : public I_Keymap_View {
 
     public:
 
@@ -70,7 +71,7 @@ class Key_Mapping_Info {
         /**
          * @brief Update display to match current layer
          */
-        void update_layer();
+        void update_layer() override;
 
         /**
          * @brief Register a callback invoked on every button click
@@ -92,14 +93,14 @@ class Key_Mapping_Info {
          * @param keys   Overlay keys to display on this frame
          */
         void push_overlay(const std::string& title,
-                          const std::vector<I_Panel::Overlay_Key_Desc>& keys);
+                          const std::vector<I_Panel::Overlay_Key_Desc>& keys) override;
 
         /**
          * @brief Pop the top overlay frame from the stack
          *
          * Restores the previous overlay or normal layer display.
          */
-        void pop_overlay();
+        void pop_overlay() override;
 
         /**
          * @brief Check if any overlay is active
@@ -114,7 +115,7 @@ class Key_Mapping_Info {
          *
          * @param key_index Logical key index to flash
          */
-        void flash_key(int key_index);
+        void flash_key(int key_index) override;
 
         /**
          * @brief Find a key index whose current display label matches the given string

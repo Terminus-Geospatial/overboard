@@ -73,7 +73,7 @@ if [ $BUILD_WASM -eq 1 ]; then
     exit 0
 fi
 
-echo "Building for SDL (TH33 macropad)..."
+echo "Building for SDL (MK20 macropad)..."
 
 BUILD_ARGS="-j 4 -p SDL"
 if [ $CLEAN_BUILD -eq 1 ]; then
@@ -99,9 +99,9 @@ if [ $BUILD_EXIT -eq 0 ]; then
     elif [ $SKIP_RUN -eq 0 ]; then
         echo "Starting simulator..."
         if [ $RUN_LLDB -eq 1 ]; then
-            lldb -- ./build/calc_sim --layout "$(pwd)/data/configs/th33" -v trace
+            lldb -- ./build/calc_sim --layout "$(pwd)/data/configs/mk20" -v trace
         else
-            ./build/calc_sim --layout ./data/configs/th33 -v trace
+            ./build/calc_sim --layout ./data/configs/mk20 -v trace
         fi
     else
         echo "Skipping simulator run (build only)."

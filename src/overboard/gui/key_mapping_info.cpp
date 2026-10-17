@@ -29,7 +29,6 @@ Key_Mapping_Info::Key_Mapping_Info( lv_obj_t*                      parent,
                                    std::function<std::string(int)> get_label_cb )
     : m_layout(layout), m_layers(layers), m_width(width), m_height(height), m_get_label_cb(std::move(get_label_cb))
 {
-    LOG_TRACE("Key_Mapping_Info: Creating root container");
     // Root container: full display, light background, no padding
     m_container = lv_obj_create(parent);
     lv_obj_set_size(m_container, width, height);
@@ -40,7 +39,6 @@ Key_Mapping_Info::Key_Mapping_Info( lv_obj_t*                      parent,
     lv_obj_set_style_radius(m_container, 0, LV_PART_MAIN);
     lv_obj_set_scrollable(m_container, false);
 
-    LOG_TRACE("Key_Mapping_Info: Creating header bar");
     // Header bar: layer name
     lv_obj_t* header = lv_obj_create(m_container);
     lv_obj_set_size(header, width, HEADER_H);
@@ -77,7 +75,6 @@ Key_Mapping_Info::~Key_Mapping_Info() {
 /*        Build Keys        */
 /***************************/
 void Key_Mapping_Info::build_keys(lv_obj_t* parent) {
-    LOG_TRACE("Key_Mapping_Info::build_keys: Getting key count from layout");
     const int key_count = m_layout.key_count();
     m_key_labels.assign(static_cast<std::size_t>(key_count), nullptr);
     m_key_rects.assign(static_cast<std::size_t>(key_count), nullptr);
@@ -95,15 +92,12 @@ void Key_Mapping_Info::build_keys(lv_obj_t* parent) {
     int keys_created = 0;
 
     for (int i = 0; i < key_count; ++i) {
-        LOG_TRACE("Key_Mapping_Info::build_keys: Processing key " + std::to_string(i));
         auto pos_opt = m_layout.get_key_position(i);
         if (!pos_opt) {
-            LOG_TRACE("Key_Mapping_Info::build_keys: Key " + std::to_string(i) + " has no position, skipping");
             continue;
         }
 
         if (m_layout.get_cell_type(pos_opt->col, pos_opt->row) != ovb::core::Cell_Type::KEY_START) {
-            LOG_TRACE("Key_Mapping_Info::build_keys: Key " + std::to_string(i) + " is not KEY_START, skipping");
             continue;
         }
 
@@ -113,7 +107,6 @@ void Key_Mapping_Info::build_keys(lv_obj_t* parent) {
             ovb::core::Point<int>{cell_w,  cell_h},
             KEY_PAD);
         if (!rect_opt) {
-            LOG_TRACE("Key_Mapping_Info::build_keys: Key " + std::to_string(i) + " has no rect, skipping");
             continue;
         }
 
@@ -122,7 +115,6 @@ void Key_Mapping_Info::build_keys(lv_obj_t* parent) {
         // Key widget with optional click handling
         lv_obj_t* rect = lv_obj_create(parent);
         if (!rect) {
-            LOG_TRACE("Key_Mapping_Info::build_keys: Failed to create rect for key " + std::to_string(i) + ", skipping");
             continue;
         }
         keys_created++;
@@ -158,7 +150,6 @@ void Key_Mapping_Info::build_keys(lv_obj_t* parent) {
             lv_obj_set_hidden(lbl, false);
         }
 
-        LOG_TRACE("Key_Mapping_Info::build_keys: Label text set for key " + std::to_string(i));
         lv_obj_set_style_text_color(lbl, lvgl_color(LVGL_COLOR_TEXT_PRIMARY), LV_PART_MAIN);
 
         // Use custom font for math symbols
@@ -170,9 +161,9 @@ void Key_Mapping_Info::build_keys(lv_obj_t* parent) {
 
         m_key_rects[static_cast<std::size_t>(i)]  = rect;
         m_key_labels[static_cast<std::size_t>(i)] = lbl;
-        LOG_TRACE("Key_Mapping_Info::build_keys: Key " + std::to_string(i) + " complete");
     }
-    LOG_TRACE("Key_Mapping_Info::build_keys: Complete - created=" + std::to_string(keys_created));
+    LOG_TRACE("Key_Mapping_Info::build_keys: created=" + std::to_string(keys_created) +
+              "/" + std::to_string(key_count) + " keys");
 }
 
 /***************************/
