@@ -106,5 +106,40 @@
         "25": { "code": "CURSOR_RIGHT",  "label": "R>" }
       }
     }
-  ]
+  ],
+
+  "screens": {
+    "Menu": {
+      "dial_right": "encoder_system_volume",
+      "strip": [
+        { "x": 130, "y": 30,  "w": 380, "h": 60, "text": "overboard" },
+        { "x": 130, "y": 90,  "w": 380, "h": 40, "data": "ver" }
+      ],
+      "keys": {
+        "0":  { "code": "ESCAPE",      "label": "Esc"  },
+        "1":  { "panel": "Status",     "label": "Stat", "image": "icons/status.png"     },
+        "2":  { "panel": "Calculator", "label": "Calc", "image": "icons/calculator.png" },
+        "3":  { "panel": "Settings",   "label": "Set",  "image": "icons/settings.png"   },
+        "20": { "code": "EVAL",        "label": "Sel"  },
+        "21": { "code": "CURSOR_UP",   "label": "Up"   },
+        "22": { "code": "CURSOR_DOWN", "label": "Dn"   }
+      }
+    },
+    "Status": {
+      "dial_right": "encoder_system_volume",
+      "strip": [
+        { "x": 110, "y": 15,  "w": 200, "h": 60, "data": "clock" },
+        { "x": 320, "y": 15,  "w": 210, "h": 40, "data": "date"  },
+        { "x": 110, "y": 95,  "w": 420, "h": 35, "data": "wifi"  }
+      ],
+      "keys": {
+        "0":  { "code": "ESCAPE",      "label": "Esc"   },
+        "1":  { "code": "FUNC_1",      "label": "About" },
+        "2":  { "code": "FUNC_2",      "label": "Stats" },
+        "3":  { "code": "FUNC_3",      "label": "Net"   },
+        "4":  { "panel": "Calculator", "label": "Calc", "image": "icons/calculator.png" },
+        "20": { "code": "ESCAPE",      "label": "Menu"  }
+      }
+    }
+  }
 }

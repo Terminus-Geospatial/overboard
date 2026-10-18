@@ -12,14 +12,11 @@
 
 namespace ovb::hal::picocalc {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /****************************/
 /*     Constructor          */
 /****************************/
 PicoCalc_System_Info::PicoCalc_System_Info() {
-    s_logger.debug("PicoCalc_System_Info created (uninitialized)");
+    LOG_DEBUG("PicoCalc_System_Info created (uninitialized)");
 }
 
 /****************************/
@@ -30,7 +27,7 @@ bool PicoCalc_System_Info::init() {
     // TODO: Check SD card mount status
     // TODO: Verify temperature sensor ADC channel
 
-    s_logger.debug("PicoCalc_System_Info::init() - stub implementation");
+    LOG_DEBUG("PicoCalc_System_Info::init() - stub implementation");
     m_initialized = true;
     return true;
 }
@@ -42,7 +39,7 @@ System_Info PicoCalc_System_Info::get_info() {
     System_Info info;
 
     if (!m_initialized) {
-        s_logger.warning("get_info() called before init()");
+        LOG_WARN("get_info() called before init()");
         return info;
     }
 
@@ -110,7 +107,7 @@ std::optional<float> PicoCalc_System_Info::read_cpu_temp() {
     // TODO: Read RP2350 internal temperature sensor via ADC
     // ADC channel 4 is the temperature sensor
     // Formula: T = 27 - (ADC_voltage - 0.706) / 0.001721
-    s_logger.debug("read_cpu_temp() - stub");
+    LOG_DEBUG("read_cpu_temp() - stub");
     return std::nullopt;
 }
 
@@ -121,7 +118,7 @@ std::optional<PicoCalc_System_Info::Battery_Info> PicoCalc_System_Info::read_bat
     // TODO: Read MAX17048 via I2C
     // Register 0x02: VCELL (voltage)
     // Register 0x04: SOC (state of charge)
-    s_logger.debug("read_battery() - stub");
+    LOG_DEBUG("read_battery() - stub");
     return std::nullopt;
 }
 
@@ -130,7 +127,7 @@ std::optional<PicoCalc_System_Info::Battery_Info> PicoCalc_System_Info::read_bat
 /****************************/
 std::optional<System_Info::Storage> PicoCalc_System_Info::read_storage() {
     // TODO: Use f_stat or similar to get SD card FAT32 filesystem stats
-    s_logger.debug("read_storage() - stub");
+    LOG_DEBUG("read_storage() - stub");
     return std::nullopt;
 }
 
@@ -139,7 +136,7 @@ std::optional<System_Info::Storage> PicoCalc_System_Info::read_storage() {
 /****************************/
 std::optional<System_Info::USB_Status> PicoCalc_System_Info::read_usb() {
     // TODO: Query TinyUSB for host/device mode and connection status
-    s_logger.debug("read_usb() - stub");
+    LOG_DEBUG("read_usb() - stub");
     return std::nullopt;
 }
 

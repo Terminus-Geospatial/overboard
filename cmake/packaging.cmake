@@ -18,9 +18,9 @@ install(TARGETS calc_app
     COMPONENT runtime
 )
 
-# Keyboard config files
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/configs/th33/
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/overboard/configs/th33
+# Keyboard config files (includes icons/ subdirectory)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/configs/mk20/
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/overboard/configs/mk20
     COMPONENT runtime
 )
 
@@ -64,7 +64,7 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
     "${CMAKE_SOURCE_DIR}/packaging/debian/prerm"
 )
 
-# Output filename: overboard-<version>-armhf.deb
+# Output filename: overboard-<version>-arm64.deb
 set(CPACK_PACKAGE_FILE_NAME
     "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}"
 )

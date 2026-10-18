@@ -16,9 +16,6 @@
 
 namespace ovb::hal::pi_zero {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /****************************/
 /*     Constructor          */
 /****************************/
@@ -29,8 +26,8 @@ PiZero_Settings_Store::PiZero_Settings_Store(
     m_config_dir = get_config_dir(use_system_path);
     m_settings_file = m_config_dir / file_name;
 
-    s_logger.debug("PiZero_Settings_Store: config_dir={}, file={}",
-                   m_config_dir.string(), m_settings_file.string());
+    LOG_DEBUG("PiZero_Settings_Store: config_dir=", m_config_dir.string(),
+              ", file=", m_settings_file.string());
 }
 
 /****************************/
@@ -38,7 +35,7 @@ PiZero_Settings_Store::PiZero_Settings_Store(
 /****************************/
 bool PiZero_Settings_Store::load(Settings_Tree& out_tree) {
     if (!exists()) {
-        s_logger.debug("Settings file does not exist, returning empty tree");
+        LOG_DEBUG("Settings file does not exist, returning empty tree");
         out_tree = Settings_Tree();
         return true;
     }
@@ -46,11 +43,11 @@ bool PiZero_Settings_Store::load(Settings_Tree& out_tree) {
     try {
         toml::table table = toml::parse_file(m_settings_file.string());
         out_tree = Settings_Tree(std::move(table));
-        s_logger.debug("Loaded settings from {}", m_settings_file.string());
+        LOG_DEBUG("Loaded settings from ", m_settings_file.string());
         return true;
     } catch (const toml::parse_error& e) {
-        s_logger.error("Failed to parse settings file: {} - {}",
-                       m_settings_file.string(), std::string(e.what()));
+        LOG_ERROR("Failed to parse settings file: ", m_settings_file.string(),
+                  " - ", e.what());
         return false;
     }
 }
@@ -60,14 +57,14 @@ bool PiZero_Settings_Store::load(Settings_Tree& out_tree) {
 /****************************/
 bool PiZero_Settings_Store::save(const Settings_Tree& tree) {
     if (!ensure_config_dir()) {
-        s_logger.error("Failed to create config directory: {}", m_config_dir.string());
+        LOG_ERROR("Failed to create config directory: ", m_config_dir.string());
         return false;
     }
 
     std::ofstream file(m_settings_file);
     if (!file.is_open()) {
-        s_logger.error("Failed to open settings file for writing: {}",
-                       m_settings_file.string());
+        LOG_ERROR("Failed to open settings file for writing: ",
+                  m_settings_file.string());
         return false;
     }
 
@@ -75,11 +72,11 @@ bool PiZero_Settings_Store::save(const Settings_Tree& tree) {
     file << tree.data();
 
     if (!file.good()) {
-        s_logger.error("Failed to write settings file: {}", m_settings_file.string());
+        LOG_ERROR("Failed to write settings file: ", m_settings_file.string());
         return false;
     }
 
-    s_logger.debug("Saved settings to {}", m_settings_file.string());
+    LOG_DEBUG("Saved settings to ", m_settings_file.string());
     return true;
 }
 
@@ -156,7 +153,7 @@ bool PiZero_Settings_Store::ensure_config_dir() {
         std::filesystem::create_directories(m_config_dir);
         return true;
     } catch (const std::filesystem::filesystem_error& e) {
-        s_logger.error("Failed to create config directory: {}", std::string(e.what()));
+        LOG_ERROR("Failed to create config directory: ", e.what());
         return false;
     }
 }

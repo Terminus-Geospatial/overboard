@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cstdio>
 #include <memory>
+#include <mutex>
 
 // Third-Party Libraries
 #ifdef TARGET_RP2350
@@ -68,6 +69,12 @@ const char* Stdout_Logger::level_tag(Log_Level level) {
 void Stdout_Logger::log(Log_Level level, std::string_view message) {
     if (level < m_min_level) return;
 
+    // Serialize output — the mpad reader thread and other workers log too,
+    // and stdout is fully buffered when piped (systemd journal), so flush
+    // every line to keep journald output timely and lines intact.
+    static std::mutex s_log_mtx;
+    std::lock_guard lk(s_log_mtx);
+
     const uint64_t us = now_us();
     const uint64_t secs  = us / 1'000'000;
     const uint64_t frac  = (us % 1'000'000) / 1'000;
@@ -84,6 +91,7 @@ void Stdout_Logger::log(Log_Level level, std::string_view message) {
 
     // Output to stdout
     std::printf("%s", formatted);
+    std::fflush(stdout);
 
     // Output to UART if available
 #ifdef TARGET_RP2350
@@ -96,6 +104,9 @@ void Stdout_Logger::log(Log_Level level, std::string_view message) {
 /***************************/
 void Stdout_Logger::log(Log_Level level, std::source_location loc, std::string_view message) {
     if (level < m_min_level) return;
+
+    static std::mutex s_log_mtx;
+    std::lock_guard lk(s_log_mtx);
 
     const uint64_t us = now_us();
     const uint64_t secs  = us / 1'000'000;
@@ -115,6 +126,7 @@ void Stdout_Logger::log(Log_Level level, std::source_location loc, std::string_v
 
     // Output to stdout
     std::printf("%s", formatted);
+    std::fflush(stdout);
 
     // Output to UART if available
 #ifdef TARGET_RP2350

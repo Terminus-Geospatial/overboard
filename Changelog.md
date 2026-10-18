@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.17.0] - 2026-10-17
+
+### Added
+- MK20 per-panel screens (`"screens"` in `keyboard.json`): panel-jump,
+  action, and text keys; PNG icons; live telemetry strip widgets;
+  per-panel dial functions. Ships Menu + Status screens
+- `mpad::render_key_icon`: Montserrat glyph/label rasterizer → PNG;
+  every key gets a unique-path baked icon; shared with `ovt_icon_render`
+- Docker arm64 build pipeline (`docker_build.sh`, `sync_and_build.sh -D`);
+  `.deb` ships the mk20 config/icons and runs the mk20 layout
+- `mpad` TRACE instrumentation (serial reads, frames, key events),
+  overlay theme stack, per-screen strip `tick()`, `io/file_utils`
+
+### Changed
+- Logging: `s_logger` instances → `LOG_*` macros; `{}` placeholders →
+  comma args; mutex + `fflush` per line for journald
+- `lv_conf.h`: `LV_COLOR_FORMAT_DEFAULT`; SDL/DRM auto-backends disabled
+
+### Fixed
+- MK20 keys dead: device only pushes `keyState` after a
+  `{"connect": true}` handshake — now sent on connect and theme reload
+- Stale key art on theme switches: truncated embedded PNG + firmware
+  repaint heuristic — blank-theme clear (blocking on device ack) +
+  baked unique-path icons on every activation
+- Serial open failures log `errno`
+
+---
+
 ## [0.16.0] - 2026-10-17
 
 ### Added

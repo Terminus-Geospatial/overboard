@@ -16,6 +16,9 @@
 #include <termios.h>
 #include <unistd.h>
 
+// Project Libraries
+#include <overboard/log/stdout_logger.hpp>
+
 namespace ovb::mpad {
 
 /***************************/
@@ -24,6 +27,8 @@ namespace ovb::mpad {
 Serial_Port::Serial_Port( const std::filesystem::path& path, unsigned baud ) {
     m_fd = ::open( path.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK );
     if (m_fd < 0) {
+        LOG_ERROR("Serial_Port: failed to open ", path.string(),
+                  ": ", std::strerror(errno));
         return;
     }
 

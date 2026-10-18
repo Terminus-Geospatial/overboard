@@ -1,0 +1,37 @@
+# Pi Zero build environment for calc_app (TARGET_DEVICE=ZERO).
+#
+# The Zero 2W is aarch64 running Debian trixie (GCC 14). On an Apple
+# Silicon Mac a linux/arm64 container compiles natively — no cross
+# toolchain required. On x86 hosts this still works via qemu binfmt,
+# just slower.
+#
+#   docker build -f docker/Dockerfile.pi-zero -t overboard-pizero:trixie docker/
+FROM debian:trixie-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        ccache \
+        curl \
+        dpkg-dev \
+        libdrm-dev \
+        libgbm-dev \
+        libpng-dev \
+        make \
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Project requires CMake 4.0+; trixie only ships 3.31 — install the
+# official Kitware aarch64 binary (matches the host's 4.0.2).
+ARG CMAKE_VERSION=4.0.2
+RUN curl -fsSL "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-aarch64.tar.gz" \
+        -o /tmp/cmake.tgz \
+    && tar -xzf /tmp/cmake.tgz -C /opt \
+    && ln -s "/opt/cmake-${CMAKE_VERSION}-linux-aarch64/bin/cmake" /usr/local/bin/cmake \
+    && ln -s "/opt/cmake-${CMAKE_VERSION}-linux-aarch64/bin/cpack" /usr/local/bin/cpack \
+    && rm /tmp/cmake.tgz
+
+# Build objects and ccache live in the mounted /build volume so they
+# persist across runs and never touch the host's build/ directory.
+ENV CCACHE_DIR=/build/.ccache
+WORKDIR /src

@@ -60,6 +60,11 @@ inline constexpr int CANVAS_H   { 656 };
 inline constexpr int KEY_SIZE   { 128 };
 inline constexpr int KEY_GRID_Y { 144 };  ///< keys start below the 428x142 strip
 
+/// Secondary status-strip geometry (device coords)
+inline constexpr int STRIP_X { 106 };
+inline constexpr int STRIP_W { 428 };
+inline constexpr int STRIP_H { 142 };
+
 /// Encoder pseudo-rows and positions
 inline constexpr int ENCODER_LEFT_ROW  { 100 };
 inline constexpr int ENCODER_RIGHT_ROW { 103 };
@@ -121,6 +126,12 @@ Map encoder_keyboard_action( int cw_keycode,
                              const std::string& ccw_key_string = "",
                              const std::string& description = "Encoder" );
 
+/// Device-native encoder function — no HID keystrokes; the device
+/// adjusts it directly. kind: "encoder_system_volume" (rotate=volume,
+/// click=mute), "encoder_system_media", "encoder_device_brightness".
+Map encoder_function_action( const std::string& kind,
+                             const std::string& description = "" );
+
 // ---------------------------------------------------------------------------
 // Item builders. All numeric fields are JSON strings per vendor files.
 // ---------------------------------------------------------------------------
@@ -137,6 +148,39 @@ nlohmann::json encoder_item( int pseudo_row,
                              const Map& action,
                              const std::string& icon_asset_path,
                              const std::string& item_id );
+
+/**
+ * @brief Type-114 image/GIF item — decorative image, or a canvas-clearing
+ * background when background_type is set ("main" = behind the key
+ * grid). The firmware does not repaint untouched pixels on theme
+ * switch, so themes need an opaque background under transparent art.
+ *
+ * @param asset_path Path to the image asset
+ * @param item_id Unique identifier for the item
+ * @param x X coordinate of the item
+ * @param y Y coordinate of the item
+ * @param w Width of the item
+ * @param h Height of the item
+ * @param z Z-order of the item (default: 1)
+ * @param background_type Background type (default: empty)
+ * @return nlohmann::json JSON representation of the item
+ */
+nlohmann::json dynamic_image_item( const std::string& asset_path,
+                                   const std::string& item_id,
+                                   int x, int y, int w, int h,
+                                   int z = 1,
+                                   const std::string& background_type = "" );
+
+/// Type-113 text widget for the 428x142 status strip (y < KEY_GRID_Y).
+/// With system_data_name set, the device renders the value pushed via
+/// Device::push_system_data under that channel name. font_pt is a Qt
+/// point size — an empty text_font makes the firmware pick a large
+/// default that overflows the widget bounds, so always size it.
+nlohmann::json text_item( const std::string& item_id,
+                          int x, int y, int w, int h,
+                          const std::string& text,
+                          const std::string& system_data_name = "",
+                          int font_pt = 10 );
 
 /// Page container with required boilerplate
 nlohmann::json make_page( const nlohmann::json& items,

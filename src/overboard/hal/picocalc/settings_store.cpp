@@ -12,15 +12,12 @@
 
 namespace ovb::hal::picocalc {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /****************************/
 /*     Constructor          */
 /****************************/
 PicoCalc_Settings_Store::PicoCalc_Settings_Store(const std::filesystem::path& path)
     : m_path(path) {
-    s_logger.debug("PicoCalc_Settings_Store created (uninitialized), path={}", path.string());
+    LOG_DEBUG("PicoCalc_Settings_Store created (uninitialized), path=", path.string());
 }
 
 /****************************/
@@ -32,7 +29,7 @@ bool PicoCalc_Settings_Store::init() {
     // 2. Mount FAT filesystem
     // 3. Check if writable
 
-    s_logger.debug("PicoCalc_Settings_Store::init() - stub, SD/FAT not yet implemented");
+    LOG_DEBUG("PicoCalc_Settings_Store::init() - stub, SD/FAT not yet implemented");
     m_initialized = false;
     m_sd_mounted  = false;
     return false;
@@ -43,19 +40,19 @@ bool PicoCalc_Settings_Store::init() {
 /****************************/
 bool PicoCalc_Settings_Store::load(Settings_Tree& out_tree) {
     if (!m_initialized) {
-        s_logger.warning("Load called before init()");
+        LOG_WARN("Load called before init()");
         out_tree = Settings_Tree();
         return true;  // Return empty tree, not an error
     }
 
     if (!m_sd_mounted) {
-        s_logger.error("SD card not mounted");
+        LOG_ERROR("SD card not mounted");
         out_tree = Settings_Tree();
         return true;
     }
 
     // TODO: Read settings.toml from SD card using f_open/f_read
-    s_logger.debug("PicoCalc load() - stub");
+    LOG_DEBUG("PicoCalc load() - stub");
     out_tree = Settings_Tree();
     return true;
 }
@@ -66,17 +63,17 @@ bool PicoCalc_Settings_Store::load(Settings_Tree& out_tree) {
 bool PicoCalc_Settings_Store::save(const Settings_Tree& tree) {
 
     if (!m_initialized) {
-        s_logger.error("Save called before init()");
+        LOG_ERROR("Save called before init()");
         return false;
     }
 
     if (!m_sd_mounted) {
-        s_logger.error("SD card not mounted");
+        LOG_ERROR("SD card not mounted");
         return false;
     }
 
     // TODO: Write settings.toml to SD card using f_open/f_write
-    s_logger.debug("PicoCalc save() - stub");
+    LOG_DEBUG("PicoCalc save() - stub");
     return false;
 }
 

@@ -3,7 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-BUILD_DIR="${PROJECT_DIR}/build"
+# OVB_BUILD_DIR overrides the build dir (used by the Docker flow so the
+# container's objects don't share a directory with host artifacts).
+BUILD_DIR="${OVB_BUILD_DIR:-${PROJECT_DIR}/build}"
 
 BUILD_TYPE="Debug"
 CLEAN=false
@@ -154,7 +156,7 @@ echo "Project dir   : ${PROJECT_DIR}"
 echo "Build dir     : ${BUILD_DIR}"
 echo ""
 
-CMAKE_ARGS="-S ${PROJECT_DIR} -B ${BUILD_DIR} -DTARGET_DEVICE=${TARGET_DEVICE} -DSIMULATOR=${SIMULATOR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DDEBUG_LAYOUT=${DEBUG_LAYOUT}"
+CMAKE_ARGS="-S ${PROJECT_DIR} -B ${BUILD_DIR} -DTARGET_DEVICE=${TARGET_DEVICE} -DSIMULATOR=${SIMULATOR} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DDEBUG_LAYOUT=${DEBUG_LAYOUT} ${OVB_CMAKE_EXTRA_ARGS:-}"
 
 # Disable LVGL SDL drivers for embedded targets
 if [[ "${TARGET_USES_SDL}" == "OFF" ]]; then

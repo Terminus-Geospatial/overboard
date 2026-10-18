@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 // Third-Party Libraries
@@ -61,6 +62,13 @@ class Panel_Manager {
          * @param index Panel index from register_panel()
          */
         void push(int index);
+
+        /**
+         * @brief Push a panel by its I_Panel::name()
+         * @param name Panel name to find and activate
+         * @return true if a panel with that name was found and pushed
+         */
+        bool push_by_name(const std::string& name);
 
         /**
          * @brief Pop the top panel and reactivate the one below

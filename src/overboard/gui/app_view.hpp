@@ -97,6 +97,16 @@ class App_View : public hal::I_Display {
          */
         std::string get_active_panel_label(int key_index) const;
 
+        /// @brief Name of the active panel ("" when none)
+        std::string active_panel_name() const;
+
+        /**
+         * @brief Push a registered panel by name (MK20 screen jump keys)
+         * @param name Panel name matching I_Panel::name()
+         * @return true if the panel was found and pushed
+         */
+        bool push_panel(const std::string& name);
+
         /**
          * @brief Register a callback fired when the active panel changes
          * @param cb Callback function to invoke on panel change

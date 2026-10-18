@@ -23,23 +23,20 @@
 
 namespace ovb::hal {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /*********************************/
 /*      Create Store Instance    */
 /*********************************/
 std::unique_ptr<I_Settings_Store> Settings_Store_Factory::create() {
 #ifdef TARGET_SDL
-    s_logger.info("Creating SDL settings store (filesystem)");
+    LOG_INFO("Creating SDL settings store (filesystem)");
     return std::make_unique<sdl::SDL_Settings_Store>();
 #elif defined(TARGET_RP2350)
-    s_logger.info("Creating PicoCalc settings store (SD card - stub)");
+    LOG_INFO("Creating PicoCalc settings store (SD card - stub)");
     auto store = std::make_unique<picocalc::PicoCalc_Settings_Store>();
     store->init();  // Initialize SD card
     return store;
 #elif defined(TARGET_ZERO)
-    s_logger.info("Creating Pi Zero settings store (filesystem)");
+    LOG_INFO("Creating Pi Zero settings store (filesystem)");
     return std::make_unique<pi_zero::PiZero_Settings_Store>();
 #else
     #error "No target defined"

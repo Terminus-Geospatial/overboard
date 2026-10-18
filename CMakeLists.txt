@@ -91,6 +91,7 @@ if(TARGET_DEVICE STREQUAL "SDL" OR TARGET_DEVICE STREQUAL "PICOSDL" OR TARGET_DE
         src/overboard/hal/mk20/input.cpp
         src/overboard/hal/mk20/keymap.cpp
         src/overboard/mpad/device.cpp
+        src/overboard/mpad/key_icon.cpp
         src/overboard/mpad/protocol.cpp
         src/overboard/mpad/serial_port.cpp
         src/overboard/mpad/theme.cpp
@@ -117,6 +118,7 @@ set(CORE_SOURCES
     src/overboard/display/result_display.cpp
     src/overboard/font/font_metrics.cpp
     src/overboard/font/font_selector.cpp
+    src/overboard/io/file_utils.cpp
     src/overboard/io/keyboard_config.cpp
     src/overboard/math/ast/binary_op_node.cpp
     src/overboard/math/ast/function_node.cpp
@@ -188,6 +190,7 @@ add_executable(${APP_TARGET}
 target_include_directories( ${APP_TARGET} PRIVATE src )
 target_include_directories( ${APP_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/src )
 target_include_directories( ${APP_TARGET} SYSTEM PRIVATE thirdparty/lvgl )
+target_include_directories( ${APP_TARGET} SYSTEM PRIVATE thirdparty/stb )
 target_include_directories( ${APP_TARGET} SYSTEM PRIVATE thirdparty/json/include )
 target_include_directories( ${APP_TARGET} SYSTEM PRIVATE ${HARDWARE_INCLUDE_DIRS} )
 
@@ -292,6 +295,7 @@ if(TARGET_DEVICE STREQUAL "SDL" OR TARGET_DEVICE STREQUAL "PICOSDL")
         src/overboard/core/input_key.cpp
         src/overboard/core/keyboard_layout.cpp
         src/overboard/core/keymap.cpp
+        src/overboard/io/file_utils.cpp
         src/overboard/io/keyboard_config.cpp
         src/overboard/log/log_level.cpp
         src/overboard/log/stdout_logger.cpp
@@ -302,6 +306,20 @@ if(TARGET_DEVICE STREQUAL "SDL" OR TARGET_DEVICE STREQUAL "PICOSDL")
     target_include_directories(render_layout PRIVATE ${CMAKE_BINARY_DIR}/src)
     target_include_directories(render_layout SYSTEM PRIVATE thirdparty/json/include ${PNG_INCLUDE_DIRS})
     target_link_libraries(render_layout PRIVATE nlohmann_json PNG::PNG project_warnings)
+
+    # MK20 key-icon renderer (LVGL glyph -> PNG)
+    add_executable(ovt_icon_render
+        src/overboard/log/log_level.cpp
+        src/overboard/log/stdout_logger.cpp
+        src/overboard/mpad/key_icon.cpp
+        src/overboard/tools/ovt_icon_render/config.cpp
+        src/overboard/tools/ovt_icon_render/main.cpp
+    )
+    target_include_directories(ovt_icon_render PRIVATE src)
+    target_include_directories(ovt_icon_render SYSTEM PRIVATE thirdparty/stb)
+    target_include_directories(ovt_icon_render SYSTEM PRIVATE thirdparty/lvgl)
+    target_link_libraries(ovt_icon_render PRIVATE lvgl)
+    target_compile_options(ovt_icon_render PRIVATE -Wno-old-style-cast -Wno-sign-conversion)
 endif()
 
 # ── Packaging (Pi Zero only) ──────────────────────────────────────────────────────

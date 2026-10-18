@@ -75,6 +75,7 @@ std::unique_ptr<SDL_App> SDL_App::create( const core::Grid_Layout&     layout,
     try {
         io::Keyboard_Config keyboard_config = io::load_keyboard_config(layout_path);
         app->m_keymap = io::config_to_keymap(keyboard_config);
+        app->m_screens = std::move(keyboard_config.screens);
         app->m_device_config = keyboard_config.device;
         app->m_layout_path = layout_path;
     } catch (const std::exception& e) {
@@ -214,8 +215,10 @@ bool SDL_App::init() {
 #if OVB_HAS_MK20
         if (m_mk20_device) {
             auto mk20_keymap = std::make_unique<mk20::Mk20_Keymap>(
-                m_mk20_device, m_layout, m_layers,
-                [this](int key_index) { return m_view->get_active_panel_label(key_index); });
+                m_mk20_device, m_layout, m_layers, m_screens,
+                [this](int key_index) { return m_view->get_active_panel_label(key_index); },
+                [this]() { return m_view->active_panel_name(); },
+                m_system_info.get());
             m_keymap_view = mk20_keymap.get();
             m_mk20_keymap = std::move(mk20_keymap);
         }
@@ -345,6 +348,9 @@ void SDL_App::run_frame() {
             }
         }
     }
+    if (m_mk20_keymap) {
+        m_mk20_keymap->tick();
+    }
 #endif
 
     // Track shift state for future mode system
@@ -395,6 +401,23 @@ void SDL_App::handle_key(int key_index) {
     // Flash the key on the active presenter for visual feedback
     if (m_keymap_view) {
         m_keymap_view->flash_key(key_index);
+    }
+
+    // Per-panel screens own their key table while active — a bound key
+    // resolves to panel jump, action, or text; an unbound one is inert.
+    if (const auto* screen = m_screens.find(m_view->active_panel_name())) {
+        if (const auto* key = screen->key_at(key_index)) {
+            LOG_DEBUG("Keypress: screen '", screen->name,
+                      "' key_index=", std::to_string(key_index));
+            if (!key->panel.empty()) {
+                m_view->push_panel(key->panel);
+            } else if (key->action != core::Action_Code::NONE) {
+                m_view->handle_input(key->action);
+            } else if (key->text != 0) {
+                m_view->handle_text(key->text);
+            }
+        }
+        return;
     }
 
     // Get action code first - if there's an action, route as action

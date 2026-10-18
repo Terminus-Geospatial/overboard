@@ -28,6 +28,11 @@ case "$1" in
             usermod -aG input overboard
         fi
 
+        # Add overboard user to 'dialout' group for serial (ttyACM/USB) access
+        if getent group dialout > /dev/null 2>&1; then
+            usermod -aG dialout overboard
+        fi
+
         # Reload udev rules
         if command -v udevadm > /dev/null 2>&1; then
             udevadm control --reload-rules

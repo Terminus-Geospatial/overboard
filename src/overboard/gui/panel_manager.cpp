@@ -53,6 +53,20 @@ void Panel_Manager::push(int index) {
 }
 
 /*******************************/
+/*        Push by name         */
+/*******************************/
+bool Panel_Manager::push_by_name(const std::string& name) {
+    for (std::size_t i = 0; i < m_panels.size(); ++i) {
+        if (m_panels[i]->name() == name) {
+            push(static_cast<int>(i));
+            return true;
+        }
+    }
+    LOG_WARN("Panel_Manager::push_by_name: no panel named '", name, "'");
+    return false;
+}
+
+/*******************************/
 /*           Pop               */
 /*******************************/
 void Panel_Manager::pop() {

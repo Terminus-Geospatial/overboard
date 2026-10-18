@@ -24,14 +24,11 @@
 
 namespace ovb::hal::pi_zero {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /****************************/
 /*     Constructor          */
 /****************************/
 PiZero_System_Info::PiZero_System_Info() {
-    s_logger.debug("PiZero_System_Info created (uninitialized)");
+    LOG_DEBUG("PiZero_System_Info created (uninitialized)");
 }
 
 /****************************/
@@ -45,8 +42,8 @@ bool PiZero_System_Info::init() {
     m_has_bt = (access("/sys/class/bluetooth", F_OK) == 0) ||
                (system("which hciconfig > /dev/null 2>&1") == 0);
 
-    s_logger.debug("PiZero_System_Info::init() - battery={}, bt={}",
-                   std::to_string(m_has_battery), std::to_string(m_has_bt));
+    LOG_DEBUG("PiZero_System_Info::init() - battery=", m_has_battery,
+              ", bt=", m_has_bt);
 
     m_initialized = true;
     return true;

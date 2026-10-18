@@ -52,7 +52,7 @@ void Config::configure_logging()
     // Create stdout logger with configured severity
     log::Stdout_Logger logger(m_log_severity);
 
-    logger.debug( "Logging Configured\n{}", to_string() );
+    logger.debug( "Logging Configured\n", to_string() );
 }
 
 /****************************************/

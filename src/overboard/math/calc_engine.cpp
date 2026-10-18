@@ -23,9 +23,6 @@
 
 namespace ovb::math {
 
-// Static logger for this module
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /****************************/
 /*     Constructor/Reset    */
 /****************************/
@@ -185,26 +182,26 @@ void Calc_Engine::handle_key( core::Action_Code code ) {
 /*    Expression Insert     */
 /****************************/
 void Calc_Engine::try_insert( core::Action_Code code ) {
-    s_logger.debug("try_insert: action_code=" + std::to_string(static_cast<int>(code)));
+    LOG_DEBUG("try_insert: action_code=" + std::to_string(static_cast<int>(code)));
     m_state.expression.insert(code);
     m_state.display_value = m_state.expression.render_string();
-    s_logger.debug("Expression after insert: " + m_state.display_value);
+    LOG_DEBUG("Expression after insert: " + m_state.display_value);
 }
 
 /****************************/
 /*       Evaluation         */
 /****************************/
 void Calc_Engine::evaluate() {
-    s_logger.debug("evaluate() called, expression empty: " + std::string(m_state.expression.empty() ? "yes" : "no"));
+    LOG_DEBUG("evaluate() called, expression empty: " + std::string(m_state.expression.empty() ? "yes" : "no"));
     if (m_state.expression.empty()) return;
 
     std::string expr_str = m_state.expression.eval_string();
-    s_logger.debug("Evaluating expression: " + expr_str);
+    LOG_DEBUG("Evaluating expression: " + expr_str);
     Parser           p(expr_str);
     ast::Node::ptr_t tree = p.parse();
 
     if (!tree) {
-        s_logger.error("Parse error | Expression: " + expr_str);
+        LOG_ERROR("Parse error | Expression: " + expr_str);
         m_state.error         = "Parse error";
         m_state.display_value = "Error";
         return;
@@ -216,7 +213,7 @@ void Calc_Engine::evaluate() {
         ast::Node::ptr_t result = tree->simplify();
 
         std::string result_str = result->to_string();
-        s_logger.debug("Evaluation result: " + result_str);
+        LOG_DEBUG("Evaluation result: " + result_str);
 
         // Push to history before setting result
         m_state.history.push_front({expr_str, result_str});
@@ -235,7 +232,7 @@ void Calc_Engine::evaluate() {
         m_result_shown        = true;
 #ifdef __cpp_exceptions
     } catch (const std::exception& ex) {
-        s_logger.error("Evaluation error: " + std::string(ex.what()) + " | Expression: " + expr_str);
+        LOG_ERROR("Evaluation error: " + std::string(ex.what()) + " | Expression: " + expr_str);
         m_state.error         = ex.what();
         m_state.display_value = "Error";
     }

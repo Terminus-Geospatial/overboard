@@ -137,6 +137,9 @@ class SDL_App : public I_App {
         /// @brief Layer manager for the calculator
         core::Layer_Manager m_layers;
 
+        /// @brief Per-panel MK20 screen definitions from keyboard.json
+        core::Screen_Set m_screens;
+
         /// @brief Calculator engine for mathematical operations
         math::Calc_Engine m_engine;
 

@@ -10,7 +10,6 @@
 // C++ Standard Libraries
 #include <algorithm>
 #include <cmath>
-#include <fstream>
 #include <iostream>
 #include <stdexcept>
 
@@ -18,6 +17,7 @@
 #include <nlohmann/json.hpp>
 
 // Project Libraries
+#include <overboard/io/file_utils.hpp>
 #include <overboard/resources/embedded_json.hpp>
 
 namespace ovb::io {
@@ -37,13 +37,47 @@ static Key_Position parse_position(const json& pos_json) {
 }
 
 /*******************************/
-/* Parse Layer Key Override    */
+/*     Parse Screen Set        */
 /*******************************/
-static Layer_Key parse_layer_key(const json& key_json) {
-    Layer_Key key{};
-    key.code = key_json.value("code", "NONE");
-    key.label = key_json.value("label", "");
-    return key;
+static void parse_screens(const json& data, core::Screen_Set& screens) {
+    if (!data.contains("screens") || !data["screens"].is_object()) {
+        return;
+    }
+    for (const auto& [panel_name, screen_data] : data["screens"].items()) {
+        core::Screen screen{};
+        screen.name = panel_name;
+        screen.right_dial_function = screen_data.value("dial_right", "");
+
+        const auto keys_obj = screen_data.value("keys", json::object());
+        for (const auto& [idx_str, key_data] : keys_obj.items()) {
+            core::Screen_Key key{};
+            key.label = key_data.value("label", "");
+            key.panel = key_data.value("panel", "");
+            key.image = key_data.value("image", "");
+            key.action = core::string_to_action_code(key_data.value("code", "NONE"));
+            const auto text = key_data.value("text", "");
+            if (!text.empty()) {
+                // First byte of the UTF-8 label — hotkeys are ASCII
+                key.text = static_cast<char32_t>(static_cast<unsigned char>(text[0]));
+            }
+            screen.keys[std::stoi(idx_str)] = std::move(key);
+        }
+
+        const auto strip_arr = screen_data.value("strip", json::array());
+        for (const auto& item_data : strip_arr) {
+            core::Strip_Item item{};
+            item.x           = item_data.value("x", 0);
+            item.y           = item_data.value("y", 0);
+            item.w           = item_data.value("w", 0);
+            item.h           = item_data.value("h", 0);
+            item.font_size   = item_data.value("font_size", 0);
+            item.text        = item_data.value("text", "");
+            item.system_data = item_data.value("data", "");
+            screen.strip.push_back(std::move(item));
+        }
+
+        screens.m_screens[panel_name] = std::move(screen);
+    }
 }
 
 /*******************************/
@@ -51,8 +85,8 @@ static Layer_Key parse_layer_key(const json& key_json) {
 /*******************************/
 Keyboard_Config parse_keyboard_config(const std::filesystem::path& json_path) {
     // Read JSON file
-    std::ifstream file(json_path);
-    if (!file.is_open()) {
+    const auto content = read_file_text(json_path);
+    if (!content) {
 #ifdef __cpp_exceptions
         throw std::runtime_error("Failed to open keyboard config: " + json_path.string());
 #else
@@ -61,73 +95,17 @@ Keyboard_Config parse_keyboard_config(const std::filesystem::path& json_path) {
 #endif
     }
 
-    json data;
-#ifdef __cpp_exceptions
-    try {
-        file >> data;
-    } catch (const json::exception& e) {
-        throw std::runtime_error("Failed to parse JSON: " + std::string(e.what()));
-    }
-#else
-    file >> data;
-#endif
+    auto config = parse_keyboard_config_string(*content);
 
-    Keyboard_Config config{};
-
-    // Parse metadata
-    config.name = data.value("name", "Unknown");
-    config.description = data.value("description", "");
-
-    // Parse layout parameters
-    if (data.contains("layout")) {
-        const auto& layout = data["layout"];
-        config.layout.key_width = layout.value("key_width", 40);
-        config.layout.key_height = layout.value("key_height", 40);
-        config.layout.key_spacing = layout.value("key_spacing", 2);
-        config.layout.origin_x = layout.value("origin_x", 8);
-        config.layout.origin_y = layout.value("origin_y", 6);
-    }
-
-    // Parse key definitions
-    if (data.contains("keys")) {
-        for (const auto& [key_id, key_data] : data["keys"].items()) {
-            Key_Definition def{};
-            def.id = key_id;
-            def.input_key = key_data.value("input_key", "");
-
-            if (key_data.contains("position")) {
-                def.position = parse_position(key_data["position"]);
+    // Screen key icons resolve relative to the config file's directory
+    const auto base = json_path.parent_path();
+    for (auto& [name, screen] : config.screens.m_screens) {
+        for (auto& [idx, key] : screen.keys) {
+            if (!key.image.empty()) {
+                key.image = (base / key.image).lexically_normal().string();
             }
-
-            config.keys[key_id] = std::move(def);
         }
     }
-
-    // Parse layers
-    if (data.contains("layers")) {
-        for (const auto& layer_data : data["layers"]) {
-            Layer layer{};
-            layer.name = layer_data.value("name", "Unknown");
-
-            if (layer_data.contains("keys")) {
-                for (const auto& [key_id, key_json] : layer_data["keys"].items()) {
-                    layer.keys[key_id] = parse_layer_key(key_json);
-                }
-            }
-
-            config.layers.push_back(std::move(layer));
-        }
-    }
-
-    // Parse optional attached device (e.g. MK20 macropad)
-    if (data.contains("device")) {
-        const auto& dev = data["device"];
-        config.device = Keyboard_Config::Device_Config{
-            .type = dev.value("type", ""),
-            .port = dev.value("port", "auto"),
-        };
-    }
-
     return config;
 }
 
@@ -204,6 +182,9 @@ Keyboard_Config parse_keyboard_config_string(const std::string& json_string) {
             .port = dev.value("port", "auto"),
         };
     }
+
+    // Parse optional per-panel pad screens (MK20)
+    parse_screens(data, config.screens);
 
     return config;
 }

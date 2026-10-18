@@ -130,8 +130,8 @@
  * RENDERING CONFIGURATION
  *============================================================================*/
 
-/** Color depth: 1 (I1), 8 (L8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888) */
-#define LV_COLOR_DEPTH 32
+/** Default render color format (was LV_COLOR_DEPTH=32 → XRGB8888) */
+#define LV_COLOR_FORMAT_DEFAULT LV_COLOR_FORMAT_XRGB8888
 
 /** 0: no adjustment, get the integer part of the result (round down)
  *  64: round up from x.75
@@ -1503,7 +1503,7 @@
  *  LV_USE_OPENGLES (EGL when it is enabled). Disable this and pick a backend
  *  explicitly in the "Rendering backend" choice.
  */
-#define LV_LINUX_DRM_AUTO_BACKEND 1
+#define LV_LINUX_DRM_AUTO_BACKEND 0
 
 /** Select how the Linux DRM driver presents rendered frames.
  *  Possible values:
@@ -1759,7 +1759,7 @@
  *  (LV_USE_OPENGLES with an OpenGL draw unit). Disable this and pick a backend
  *  explicitly in the "Rendering backend" choice.
  */
-#define LV_SDL_AUTO_BACKEND 1
+#define LV_SDL_AUTO_BACKEND 0
 
 /** Select how the SDL driver presents rendered frames.
  *  Possible values:

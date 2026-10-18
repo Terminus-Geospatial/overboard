@@ -17,9 +17,6 @@
 
 namespace ovb::hal {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /*********************************/
 /*      Create App Instance      */
 /*********************************/
@@ -27,16 +24,16 @@ std::unique_ptr<I_App> App_Factory::create(const core::Grid_Layout& layout,
                                            const std::filesystem::path& layout_path) {
 #ifdef TARGET_SDL
     #ifdef TARGET_PICOSDL
-        s_logger.info("App_Factory: Creating PicoSDL application (simulator)");
+        LOG_INFO("App_Factory: Creating PicoSDL application (simulator)");
     #else
-        s_logger.info("App_Factory: Creating SDL application (simulator)");
+        LOG_INFO("App_Factory: Creating SDL application (simulator)");
     #endif
     return sdl::SDL_App::create(layout, layout_path);
 #elif defined(TARGET_RP2350)
-    s_logger.info("App_Factory: Creating PicoCalc application (RP2350 hardware)");
+    LOG_INFO("App_Factory: Creating PicoCalc application (RP2350 hardware)");
     return picocalc::PicoCalc_App::create(layout, layout_path);
 #elif defined(TARGET_ZERO)
-    s_logger.info("App_Factory: Creating Pi Zero application (Linux embedded)");
+    LOG_INFO("App_Factory: Creating Pi Zero application (Linux embedded)");
     return pi_zero::PiZero_App::create(layout, layout_path);
 #else
     #error "No target defined"

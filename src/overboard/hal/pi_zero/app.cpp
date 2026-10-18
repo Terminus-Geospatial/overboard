@@ -58,6 +58,7 @@ std::unique_ptr<PiZero_App> PiZero_App::create(const core::Grid_Layout& layout,
     try {
         keyboard_config = io::load_keyboard_config(layout_path);
         app->m_keymap = io::config_to_keymap(keyboard_config);
+        app->m_screens = std::move(keyboard_config.screens);
     } catch (const std::exception& e) {
         std::cerr << "Failed to load keyboard config: " << e.what() << "\n";
         return nullptr;
@@ -161,8 +162,10 @@ bool PiZero_App::init() {
             if (device->is_open()) {
                 m_mk20_input = std::make_unique<mk20::Mk20_Input>(device);
                 auto mk20_keymap = std::make_unique<mk20::Mk20_Keymap>(
-                    device, m_layout, m_layers,
-                    [this](int key_index) { return m_view->get_active_panel_label(key_index); });
+                    device, m_layout, m_layers, m_screens,
+                    [this](int key_index) { return m_view->get_active_panel_label(key_index); },
+                    [this]() { return m_view->active_panel_name(); },
+                    m_system_info.get());
                 m_keymap_view = mk20_keymap.get();
                 m_mk20_keymap = std::move(mk20_keymap);
                 m_mk20_device = std::move(device);
@@ -264,11 +267,16 @@ void PiZero_App::run() {
         // indices, so they bypass the Input_Key translation map.
         if (m_mk20_input) {
             while (m_mk20_input->poll(event)) {
+                LOG_TRACE( "PiZero_App: MK20 event key_index=", event.key_index,
+                           " type=", static_cast<int>( event.type ) );
                 if (event.kind == Key_Event_Kind::Action &&
                     event.type == Key_Event_Type::Press) {
                     handle_layout_key(event.key_index, -1);
                 }
             }
+        }
+        if (m_mk20_keymap) {
+            m_mk20_keymap->tick();
         }
 #endif
 
@@ -329,6 +337,23 @@ void PiZero_App::handle_layout_key(int layout_idx, int raw_input_key) {
     // Flash the key on the active presenter for visual feedback
     if (m_keymap_view) {
         m_keymap_view->flash_key(layout_idx);
+    }
+
+    // Per-panel screens own their key table while active — a bound key
+    // resolves to panel jump, action, or text; an unbound one is inert.
+    if (const auto* screen = m_screens.find(m_view->active_panel_name())) {
+        if (const auto* key = screen->key_at(layout_idx)) {
+            LOG_DEBUG("Keypress: screen '", screen->name,
+                      "' key_index=", std::to_string(layout_idx));
+            if (!key->panel.empty()) {
+                m_view->push_panel(key->panel);
+            } else if (key->action != core::Action_Code::NONE) {
+                m_view->handle_input(key->action);
+            } else if (key->text != 0) {
+                m_view->handle_text(key->text);
+            }
+        }
+        return;
     }
 
     // Get the action from the current layer

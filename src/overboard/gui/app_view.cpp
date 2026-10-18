@@ -232,6 +232,23 @@ std::string App_View::get_active_panel_label(int key_index) const {
 }
 
 /****************************/
+/*    Active panel name     */
+/****************************/
+std::string App_View::active_panel_name() const {
+    if (auto* panel = m_impl->m_panels->active_panel()) {
+        return panel->name();
+    }
+    return "";
+}
+
+/****************************/
+/*       Push panel         */
+/****************************/
+bool App_View::push_panel(const std::string& name) {
+    return m_impl->m_panels->push_by_name(name);
+}
+
+/****************************/
 /*  Set Panel Change Callback */
 /****************************/
 void App_View::set_panel_change_callback(std::function<void(I_Panel*)> cb) {

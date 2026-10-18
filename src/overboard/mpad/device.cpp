@@ -61,6 +61,10 @@ Device::Device( const std::string& port_path, double timeout_s )
     send( as_bytes( ABORT_MSG ) );
     std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     m_info = find_device();
+
+    // Connect handshake — the device only pushes key events to a host
+    // that has announced itself on this serial session.
+    send_json( nlohmann::json{{"connect", true}} );
 }
 
 /***************************/
@@ -107,6 +111,9 @@ void Device::reload_theme( const std::string& device_path ) {
     send( encode_frame(
         static_cast<uint32_t>( Command_Id::Set_Device_Reload ),
         as_bytes( device_path ) ) );
+    // RELOAD re-triggers the telemetry contract but the connect
+    // handshake is cheap insurance that key events stay armed.
+    send_json( nlohmann::json{{"connect", true}} );
 }
 
 /***************************/
@@ -345,6 +352,7 @@ void Device::read_loop() {
         if (n == 0) {
             continue;
         }
+        LOG_TRACE( "mpad::Device: read ", n, " bytes" );
         for (const auto& frame : m_parser.feed(
                  std::span<const std::byte>(
                      buf.data(), static_cast<size_t>( n ) ) )) {
@@ -357,6 +365,9 @@ void Device::read_loop() {
 /*        Dispatch         */
 /***************************/
 void Device::dispatch( const Frame& frame ) {
+    LOG_TRACE( "mpad::Device: frame cmd=", frame.command,
+               " type=", frame.packet_type,
+               " payload=", frame.payload.size(), "B" );
     if (frame.packet_type != PACKET_REPLY) {
         return;
     }
@@ -411,14 +422,23 @@ void Device::handle_event( std::span<const std::byte> payload ) {
     }
 
     const Map* state = nullptr;
+    std::string types;
     for (const auto& m : *maps) {
         auto it = m.find( "type" );
-        if (it != m.end() && std::holds_alternative<std::string>( it->second ) &&
-            std::get<std::string>( it->second ) == "keyState") {
-            state = &m;
+        if (it != m.end() && std::holds_alternative<std::string>( it->second )) {
+            const auto& t = std::get<std::string>( it->second );
+            if (!types.empty()) {
+                types += ',';
+            }
+            types += t;
+            if (t == "keyState") {
+                state = &m;
+            }
         }
     }
     if (!state) {
+        LOG_TRACE( "mpad::Device: event without keyState (maps=",
+                   maps->size(), " types='", types, "')" );
         return;
     }
 
@@ -436,6 +456,10 @@ void Device::handle_event( std::span<const std::byte> payload ) {
     evt.row     = get_int( *state, "row", -1 );
     evt.col     = get_int( *state, "col", -1 );
     evt.pressed = get_int( *state, "pressed", 0 ) != 0;
+
+    LOG_TRACE( "mpad::Device: key event row=", evt.row, " col=", evt.col,
+               " pressed=", evt.pressed,
+               " handlers=", m_key_handlers.size() );
 
     for (const auto& h : m_key_handlers) {
         h( evt );

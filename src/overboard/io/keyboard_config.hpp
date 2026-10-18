@@ -20,6 +20,7 @@
 // Project Libraries
 #include <overboard/core/keyboard_layout.hpp>
 #include <overboard/core/keymap.hpp>
+#include <overboard/core/screen.hpp>
 
 namespace ovb::io {
 
@@ -82,6 +83,9 @@ struct Keyboard_Config {
         std::string port;    ///< Serial port path, or "auto" to discover
     };
     std::optional<Device_Config> device;              ///< Present if config declares a device
+
+    /// @brief Per-panel MK20 screens, keyed by panel name ("screens" section)
+    core::Screen_Set screens;
 };
 
 /**

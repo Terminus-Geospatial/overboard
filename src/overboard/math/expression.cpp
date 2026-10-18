@@ -24,9 +24,6 @@
 
 namespace ovb::math {
 
-// Static logger for this module
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /********************************************/
 /*              Constructor                 */
 /********************************************/

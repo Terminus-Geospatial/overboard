@@ -12,7 +12,7 @@ Group=overboard
 # Allow DRM access (membership in 'video' group is set by postinst)
 SupplementaryGroups=video input
 
-ExecStart=/usr/bin/calc_app --layout /usr/share/overboard/configs/th33 -v debug
+ExecStart=/usr/bin/calc_app --layout /usr/share/overboard/configs/mk20 -v debug
 Restart=on-failure
 RestartSec=5s
 

@@ -122,6 +122,19 @@ Map encoder_keyboard_action( int cw_keycode,
 }
 
 /***************************/
+/* Encoder function action */
+/***************************/
+Map encoder_function_action( const std::string& kind,
+                             const std::string& description ) {
+    // Device-native function — the device handles rotation/click itself
+    // (no HID keystrokes, no serial events).
+    return Map{
+        {"type",        Value{kind}},
+        {"description", Value{description.empty() ? kind : description}},
+    };
+}
+
+/***************************/
 /*        Key item         */
 /***************************/
 nlohmann::json key_item( int row, int col,
@@ -180,6 +193,67 @@ nlohmann::json encoder_item( int pseudo_row,
     item["x"]       = std::to_string( x );
     item["y"]       = std::to_string( ENCODER_Y );
     item["opacity"] = "0";
+    return item;
+}
+
+/***************************/
+/*    Dynamic image item   */
+/***************************/
+nlohmann::json dynamic_image_item( const std::string& asset_path,
+                                   const std::string& item_id,
+                                   int x, int y, int w, int h,
+                                   int z,
+                                   const std::string& background_type ) {
+    nlohmann::json item;
+    item["type"]   = "114";
+    item["id"]     = item_id;
+    item["x"]      = std::to_string( x );
+    item["y"]      = std::to_string( y );
+    item["z"]      = std::to_string( z );
+    item["w"]      = std::to_string( w );
+    item["h"]      = std::to_string( h );
+    item["rotate"] = "0";
+    item["scale"]  = "1";
+    item["lock"]   = "1";
+    item["path"]   = asset_path;
+    if (!background_type.empty()) {
+        item["backgroundType"] = background_type;
+        item["maxWidth"]       = std::to_string( CANVAS_W );
+        item["maxHeight"]      = std::to_string( h );
+    }
+    return item;
+}
+
+/***************************/
+/*       Text item         */
+/***************************/
+nlohmann::json text_item( const std::string& item_id,
+                          int x, int y, int w, int h,
+                          const std::string& text,
+                          const std::string& system_data_name,
+                          int font_pt ) {
+    nlohmann::json item;
+    item["type"]   = "113";
+    item["id"]     = item_id;
+    item["x"]      = std::to_string( x );
+    item["y"]      = std::to_string( y );
+    item["z"]      = "2";
+    item["w"]      = std::to_string( w );
+    item["h"]      = std::to_string( h );
+    item["rotate"] = "0";
+    item["scale"]  = "1";
+    item["lock"]   = "1";
+
+    item["text_str"] = text;
+    // Qt QFont descriptor — empty font falls back to a device default
+    // large enough to spill below the strip into the key grid.
+    item["text_font"] = "Microsoft YaHei," + std::to_string( font_pt )
+                      + ",-1,5,50,0,0,0,0,0";
+    item["front_color"]      = "r=255,g=255,b=255,a=255";
+    item["system_data_flag"] = system_data_name.empty() ? "0" : "1";
+    if (!system_data_name.empty()) {
+        item["system_data_name"] = system_data_name;
+    }
     return item;
 }
 

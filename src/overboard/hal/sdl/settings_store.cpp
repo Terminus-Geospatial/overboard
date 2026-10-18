@@ -17,9 +17,6 @@
 
 namespace ovb::hal::sdl {
 
-// Module logger
-static ovb::log::Stdout_Logger s_logger(ovb::log::Log_Level::Debug);
-
 /****************************/
 /*     Constructor          */
 /****************************/
@@ -30,8 +27,8 @@ SDL_Settings_Store::SDL_Settings_Store(
     m_config_dir = get_platform_config_dir(app_name);
     m_settings_file = m_config_dir / file_name;
 
-    s_logger.debug("SDL_Settings_Store: config_dir={}, file={}",
-                   m_config_dir.string(), m_settings_file.string());
+    LOG_DEBUG("SDL_Settings_Store: config_dir=", m_config_dir.string(),
+              ", file=", m_settings_file.string());
 }
 
 /****************************/
@@ -45,9 +42,9 @@ bool SDL_Settings_Store::load(Settings_Tree& out_tree) {
         try {
             toml::table defaults = toml::parse_file(defaults_path.string());
             merged = Settings_Tree(std::move(defaults));
-            s_logger.debug("Loaded defaults from {}", defaults_path.string());
+            LOG_DEBUG("Loaded defaults from ", defaults_path.string());
         } catch (const toml::parse_error& e) {
-            s_logger.warn("Failed to parse defaults file: {}", std::string(e.what()));
+            LOG_WARN("Failed to parse defaults file: ", e.what());
         }
     }
 
@@ -57,14 +54,14 @@ bool SDL_Settings_Store::load(Settings_Tree& out_tree) {
             toml::table user_table = toml::parse_file(m_settings_file.string());
             Settings_Tree user_tree(std::move(user_table));
             merged.merge(user_tree);
-            s_logger.debug("Overlaid user settings from {}", m_settings_file.string());
+            LOG_DEBUG("Overlaid user settings from ", m_settings_file.string());
         } catch (const toml::parse_error& e) {
-            s_logger.error("Failed to parse user settings file: {} - {}",
-                           m_settings_file.string(), std::string(e.what()));
+            LOG_ERROR("Failed to parse user settings file: ",
+                      m_settings_file.string(), " - ", e.what());
             // Continue with defaults only
         }
     } else {
-        s_logger.debug("No user settings file found, using defaults only");
+        LOG_DEBUG("No user settings file found, using defaults only");
     }
 
     out_tree = std::move(merged);
@@ -76,14 +73,14 @@ bool SDL_Settings_Store::load(Settings_Tree& out_tree) {
 /****************************/
 bool SDL_Settings_Store::save(const Settings_Tree& tree) {
     if (!ensure_config_dir()) {
-        s_logger.error("Failed to create config directory: {}", m_config_dir.string());
+        LOG_ERROR("Failed to create config directory: ", m_config_dir.string());
         return false;
     }
 
     std::ofstream file(m_settings_file);
     if (!file.is_open()) {
-        s_logger.error("Failed to open settings file for writing: {}",
-                       m_settings_file.string());
+        LOG_ERROR("Failed to open settings file for writing: ",
+                  m_settings_file.string());
         return false;
     }
 
@@ -91,11 +88,11 @@ bool SDL_Settings_Store::save(const Settings_Tree& tree) {
     file << tree.data();
 
     if (!file.good()) {
-        s_logger.error("Failed to write settings file: {}", m_settings_file.string());
+        LOG_ERROR("Failed to write settings file: ", m_settings_file.string());
         return false;
     }
 
-    s_logger.debug("Saved settings to {}", m_settings_file.string());
+    LOG_DEBUG("Saved settings to ", m_settings_file.string());
     return true;
 }
 
@@ -198,7 +195,7 @@ bool SDL_Settings_Store::ensure_config_dir() {
         std::filesystem::create_directories(m_config_dir);
         return true;
     } catch (const std::filesystem::filesystem_error& e) {
-        s_logger.error("Failed to create config directory: {}", std::string(e.what()));
+        LOG_ERROR("Failed to create config directory: ", e.what());
         return false;
     }
 }
