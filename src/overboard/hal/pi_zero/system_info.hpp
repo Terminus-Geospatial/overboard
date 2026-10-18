@@ -93,11 +93,6 @@ class PiZero_System_Info : public I_System_Info {
 
     private:
         /**
-         * @brief Read BCM2835/BCM2836 temperature
-         */
-        std::optional<float> read_cpu_temp();
-
-        /**
          * @brief Read from power_supply sysfs (if battery HAT attached)
          */
         struct Battery_Info {
@@ -105,11 +100,6 @@ class PiZero_System_Info : public I_System_Info {
             int   percent;
         };
         std::optional<Battery_Info> read_battery();
-
-        /**
-         * @brief Read SD card or USB storage stats
-         */
-        std::optional<System_Info::Storage> read_storage();
 
         /**
          * @brief Read USB gadget mode status
@@ -126,8 +116,11 @@ class PiZero_System_Info : public I_System_Info {
          */
         std::optional<System_Info::WiFi_Status> read_wifi();
 
+        /// @brief Whether the system info has been initialized
         bool m_initialized { false };
+        /// @brief Whether a battery is detected
         bool m_has_battery { false };  // Detected at init
+        /// @brief Whether Bluetooth is detected
         bool m_has_bt      { false };  // Detected at init
 };
 

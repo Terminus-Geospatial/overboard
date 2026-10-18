@@ -42,7 +42,7 @@ Bounds calculate_bounds(const io::Keyboard_Config& config) {
 /**
  * @brief Render layout to PNG
  */
-void render_to_png(const io::Keyboard_Config& config, const std::string& output_path, log::I_Logger& logger) {
+void render_to_png(const io::Keyboard_Config& config, const std::string& output_path) {
     constexpr int KEY_SIZE = 60;  // pixels per key unit
     constexpr int PADDING = 6;     // pixels between keys
     constexpr int MARGIN = 20;     // pixels around the layout
@@ -65,8 +65,8 @@ void render_to_png(const io::Keyboard_Config& config, const std::string& output_
         // Log first few rectangles for debugging
         static int key_count = 0;
         if (key_count < 5) {
-            logger.info("Key rect: x=" + std::to_string(x) + ", y=" + std::to_string(y) +
-                       ", w=" + std::to_string(w) + ", h=" + std::to_string(h));
+            LOG_INFO("Key rect: x=" + std::to_string(x) + ", y=" + std::to_string(y) +
+                     ", w=" + std::to_string(w) + ", h=" + std::to_string(h));
             key_count++;
         }
 
@@ -161,10 +161,10 @@ int main(int argc, char* argv[]) {
     }
 
     // Configure the logger
-    log::Stdout_Logger logger(config.log_level());
+    log::Stdout_Logger::initialize(config.log_level());
 
     if (config.config_folder().empty() || config.output_path().empty()) {
-        logger.error("Missing required arguments");
+        LOG_ERROR("Missing required arguments");
         ovb::tools::lutil::Config::print_usage(argv[0]);
         return 1;
     }
@@ -173,19 +173,19 @@ int main(int argc, char* argv[]) {
         // Build path to keyboard.json
         std::filesystem::path input_path = config.config_folder() / "keyboard.json";
 
-        logger.info("Parsing: " + input_path.string());
+        LOG_INFO("Parsing: " + input_path.string());
         io::Keyboard_Config keyboard_config = io::parse_keyboard_config(input_path);
 
-        logger.info("Keyboard: " + keyboard_config.name + "\n" +
-                    "Keys: " + std::to_string(keyboard_config.keys.size()) + "\n" +
-                    "Layers: " + std::to_string(keyboard_config.layers.size()));
+        LOG_INFO("Keyboard: " + keyboard_config.name + "\n" +
+                 "Keys: " + std::to_string(keyboard_config.keys.size()) + "\n" +
+                 "Layers: " + std::to_string(keyboard_config.layers.size()));
 
-        render_to_png(keyboard_config, config.output_path().string(), logger);
+        render_to_png(keyboard_config, config.output_path().string());
 
-        logger.info("Rendered to: " + config.output_path().string());
+        LOG_INFO("Rendered to: " + config.output_path().string());
         return 0;
     } catch (const std::exception& e) {
-        logger.error(std::string("Error: ") + e.what());
+        LOG_ERROR(std::string("Error: ") + e.what());
         return 1;
     }
 }

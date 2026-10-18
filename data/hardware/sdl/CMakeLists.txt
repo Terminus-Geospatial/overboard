@@ -23,7 +23,6 @@ set(OVB_KEYBOARD_CONFIG "data/configs/mk20/" CACHE STRING
 set(HARDWARE_COMPILE_DEFINITIONS
     TARGET_SDL=1
     SIMULATOR=1
-    SHOW_KEYBOARD_UI=1
     DEFAULT_CONFIG_PATH="${OVB_KEYBOARD_CONFIG}"
     EMBEDDED_JSON=1
 )
@@ -80,9 +79,10 @@ set(HARDWARE_SOURCES
     src/overboard/hal/sdl/input.cpp
     src/overboard/hal/sdl/input_key_mapping.cpp
     src/overboard/hal/sdl/keymap.cpp
-    src/overboard/hal/sdl/keyboard_window.cpp
     src/overboard/hal/sdl/os_utils.cpp
-    src/overboard/hal/sdl/settings_store.cpp
+    src/overboard/hal/app_common.cpp
+    src/overboard/hal/file_settings_store.cpp
+    src/overboard/hal/host_info.cpp
     src/overboard/hal/sdl/system_info.cpp
     src/overboard/hal/settings_store_factory.cpp
     src/overboard/hal/settings_tree.cpp

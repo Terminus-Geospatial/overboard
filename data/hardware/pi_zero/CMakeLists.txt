@@ -108,7 +108,9 @@ set(HARDWARE_SOURCES
     src/overboard/hal/pi_zero/display_drm.cpp
     src/overboard/hal/pi_zero/input_linux.cpp
     src/overboard/hal/pi_zero/system_info.cpp
-    src/overboard/hal/pi_zero/settings_store.cpp
+    src/overboard/hal/app_common.cpp
+    src/overboard/hal/file_settings_store.cpp
+    src/overboard/hal/host_info.cpp
     src/overboard/hal/settings_store_factory.cpp
     src/overboard/hal/settings_tree.cpp
 )

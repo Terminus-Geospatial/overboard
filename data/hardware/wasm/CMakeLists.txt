@@ -56,9 +56,10 @@ set(HARDWARE_SOURCES
     src/overboard/hal/sdl/input.cpp
     src/overboard/hal/sdl/input_key_mapping.cpp
     src/overboard/hal/sdl/keymap.cpp
-    src/overboard/hal/sdl/keyboard_window.cpp
     src/overboard/hal/sdl/os_utils.cpp
-    src/overboard/hal/sdl/settings_store.cpp
+    src/overboard/hal/app_common.cpp
+    src/overboard/hal/file_settings_store.cpp
+    src/overboard/hal/host_info.cpp
     src/overboard/hal/sdl/system_info.cpp
     src/overboard/hal/settings_store_factory.cpp
     src/overboard/hal/settings_tree.cpp

@@ -8,18 +8,16 @@
 #include "system_info.hpp"
 
 // C++ Standard Libraries
-#include <sys/statvfs.h>
 #include <unistd.h>
 
 #include <array>
-#include <cerrno>
-#include <cstring>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 // Project Libraries
+#include <overboard/hal/host_info.hpp>
 #include <overboard/log/stdout_logger.hpp>
 
 namespace ovb::hal::pi_zero {
@@ -60,7 +58,7 @@ System_Info PiZero_System_Info::get_info() {
         return info;
     }
 
-    info.cpu_temp_c = read_cpu_temp();
+    info.cpu_temp_c = read_host_cpu_temp();
 
     auto batt = read_battery();
     if (batt) {
@@ -68,7 +66,7 @@ System_Info PiZero_System_Info::get_info() {
         info.battery_percent   = batt->percent;
     }
 
-    info.storage    = read_storage();
+    info.storage    = read_storage_stats("/");
     info.usb        = read_usb();
     info.bluetooth  = read_bluetooth();
     info.wifi       = read_wifi();
@@ -80,8 +78,7 @@ System_Info PiZero_System_Info::get_info() {
 /*     Capability Checks    */
 /****************************/
 bool PiZero_System_Info::has_cpu_temp() const {
-    // Pi Zero always has thermal zone
-    return access("/sys/class/thermal/thermal_zone0/temp", R_OK) == 0;
+    return has_host_cpu_temp();
 }
 
 /************************************/
@@ -166,25 +163,6 @@ std::vector<std::string> PiZero_System_Info::scan_wifi_networks() {
 }
 
 /****************************/
-/*     Read CPU Temp        */
-/****************************/
-std::optional<float> PiZero_System_Info::read_cpu_temp() {
-    std::ifstream temp_file("/sys/class/thermal/thermal_zone0/temp");
-    if (!temp_file.is_open()) {
-        return std::nullopt;
-    }
-
-    int temp_millidegrees;
-    temp_file >> temp_millidegrees;
-
-    if (temp_file.good()) {
-        return static_cast<float>(temp_millidegrees) / 1000.0f;
-    }
-
-    return std::nullopt;
-}
-
-/****************************/
 /*     Read Battery         */
 /****************************/
 std::optional<PiZero_System_Info::Battery_Info> PiZero_System_Info::read_battery() {
@@ -223,26 +201,6 @@ std::optional<PiZero_System_Info::Battery_Info> PiZero_System_Info::read_battery
     }
 
     return std::nullopt;
-}
-
-/****************************/
-/*     Read Storage         */
-/****************************/
-std::optional<System_Info::Storage> PiZero_System_Info::read_storage() {
-    struct statvfs stat;
-
-    // Get root filesystem stats
-    if (statvfs("/", &stat) != 0) {
-        LOG_WARN("Failed to get storage stats: ", std::strerror(errno));
-        return std::nullopt;
-    }
-
-    System_Info::Storage storage;
-    storage.total_bytes = stat.f_blocks * stat.f_frsize;
-    storage.free_bytes  = stat.f_bfree * stat.f_frsize;
-    storage.used_bytes  = storage.total_bytes - storage.free_bytes;
-
-    return storage;
 }
 
 /****************************/

@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.17.1] - 2026-10-21
+
+### Added
+- `hal/app_common` — shared SDL/Pi Zero wiring (`dispatch_layout_key`,
+  `dispatch_screen_key`, `wire_keymap_view_callbacks`, `make_keymap_panel`);
+  `hal/mk20/factory` for MK20 device/presenter construction
+- `mpad::discover_serial_port`, `hal::File_Settings_Store`,
+  `hal/host_info` (sysfs temp + statvfs) — replace per-target copies
+
+### Changed
+- Unified key dispatch: single chain for both apps; Pi Zero layer
+  switches now route through the active panel and gain label→text fallback
+- `main.cpp` and tools use `LOG_*`/`Stdout_Logger::initialize()`
+
+### Fixed
+- `test_math_render` `configure_logging()` discarded its logger — severity
+  was never applied
+- `PiZero_App::get_display()` threw instead of returning the view
+- picosdl target was link-broken (missing sources + embedded JSON)
+
+### Removed
+- Orphaned `src/overboard/display/` module (12 files), `file_logger`,
+  `keyboard_window`, `target_th33.hpp`, `target_mf34.hpp` + mf34 config,
+  `standard_5x6`, `load_layers_from_json`, `SHOW_KEYBOARD_UI` define
+
+---
+
 ## [0.17.0] - 2026-10-17
 
 ### Added

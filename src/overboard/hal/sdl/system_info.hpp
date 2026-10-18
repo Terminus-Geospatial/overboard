@@ -92,23 +92,17 @@ class SDL_System_Info : public I_System_Info {
          */
         System_Info collect_info();
 
-        /**
-         * @brief Read CPU temperature (platform-specific)
-         */
-        std::optional<float> read_cpu_temp();
-
-        /**
-         * @brief Read storage stats for the application directory
-         */
-        std::optional<System_Info::Storage> read_storage();
-
         /// Info snapshots are expensive to collect (~400-500ms of
         /// subprocesses on macOS) — serve this TTL from cache.
         static constexpr std::chrono::seconds INFO_CACHE_TTL { 30 };
 
+        /// @brief Mutex for thread-safe cache access
         mutable std::mutex                               m_cache_mtx;
+        /// @brief Cached system information
         mutable System_Info                              m_info_cache;
+        /// @brief Time when the cache was last updated
         mutable std::chrono::steady_clock::time_point    m_info_cached_at {};
+        /// @brief Whether the cache has been initialized
         mutable bool                                     m_info_cached { false };
         // Adapter presence is session-static; memoize to skip the
         // system_profiler/networksetup probes after the first call.
@@ -120,13 +114,8 @@ class SDL_System_Info : public I_System_Info {
          */
         #if defined(__APPLE__)
             static constexpr bool is_macos { true };
-            static constexpr bool is_linux { false };
-        #elif defined(__linux__)
-            static constexpr bool is_macos { false };
-            static constexpr bool is_linux { true };
         #else
             static constexpr bool is_macos { false };
-            static constexpr bool is_linux { false };
         #endif
 };
 

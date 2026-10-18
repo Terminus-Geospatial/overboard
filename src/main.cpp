@@ -33,8 +33,7 @@ int main(int argc, char* argv[]) {
     log::Stdout_Logger::initialize(config.log_level());
 
     // Log version information
-    auto& logger = log::Stdout_Logger::instance();
-    logger.info("kbd_calc v", PROJECT_VERSION, "\n  build: ", BUILD_DATE, "\n  git: ", GIT_HASH, GIT_DIRTY ? " (dirty)" : "");
+    LOG_INFO("kbd_calc v", PROJECT_VERSION, "\n  build: ", BUILD_DATE, "\n  git: ", GIT_HASH, GIT_DIRTY ? " (dirty)" : "");
 
     auto layout = hal::config::create_layout(config.layout_path());
 

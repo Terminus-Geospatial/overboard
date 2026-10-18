@@ -20,8 +20,8 @@ set(HARDWARE_COMPILE_DEFINITIONS
     TARGET_SDL=1
     TARGET_PICOSDL=1
     SIMULATOR=1
-    SHOW_KEYBOARD_UI=1
     DEFAULT_CONFIG_PATH="data/configs/picocalc/"
+    EMBEDDED_JSON=1
 )
 
 # SDL-specific libraries
@@ -60,6 +60,14 @@ configure_file(
     @ONLY
 )
 
+# Embed keyboard.json as C++ resource
+file(READ ${CMAKE_SOURCE_DIR}/data/configs/picocalc/keyboard.json JSON_CONTENT)
+configure_file(
+    ${CMAKE_SOURCE_DIR}/templates/embedded_json.hpp.in
+    ${CMAKE_BINARY_DIR}/src/overboard/resources/embedded_json.hpp
+    @ONLY
+)
+
 # SDL-specific source files
 set(HARDWARE_SOURCES
     src/overboard/hal/sdl/app.cpp
@@ -67,8 +75,11 @@ set(HARDWARE_SOURCES
     src/overboard/hal/sdl/input.cpp
     src/overboard/hal/sdl/input_key_mapping.cpp
     src/overboard/hal/sdl/keymap.cpp
-    src/overboard/hal/sdl/keyboard_window.cpp
+    src/overboard/hal/sdl/os_utils.cpp
+    src/overboard/hal/app_common.cpp
+    src/overboard/hal/file_settings_store.cpp
+    src/overboard/hal/host_info.cpp
+    src/overboard/hal/sdl/system_info.cpp
+    src/overboard/hal/settings_store_factory.cpp
+    src/overboard/hal/settings_tree.cpp
 )
-
-# keyboard_window.cpp and keyboard_display.cpp are already in HARDWARE_SOURCES above
-# because SHOW_KEYBOARD_UI=1 for this target

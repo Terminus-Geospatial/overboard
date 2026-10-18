@@ -88,6 +88,7 @@ endif()
 # PICOCALC (bare-metal RP2350) and WASM are excluded.
 if(TARGET_DEVICE STREQUAL "SDL" OR TARGET_DEVICE STREQUAL "PICOSDL" OR TARGET_DEVICE STREQUAL "ZERO")
     list(APPEND HARDWARE_SOURCES
+        src/overboard/hal/mk20/factory.cpp
         src/overboard/hal/mk20/input.cpp
         src/overboard/hal/mk20/keymap.cpp
         src/overboard/mpad/device.cpp
@@ -112,10 +113,6 @@ set(CORE_SOURCES
     src/overboard/core/location_provider.cpp
     src/overboard/core/settings_manager.cpp
     src/overboard/core/solar_calc.cpp
-    src/overboard/display/cursor_renderer.cpp
-    src/overboard/display/dirty_region_tracker.cpp
-    src/overboard/display/history_display.cpp
-    src/overboard/display/result_display.cpp
     src/overboard/font/font_metrics.cpp
     src/overboard/font/font_selector.cpp
     src/overboard/io/file_utils.cpp

@@ -486,16 +486,14 @@ void render_expression( const std::string&           expr,
                         bool                         debug_boxes = false,
                         float                        scale = 1.0f,
                         bool                         use_5x7 = false ) {
-    log::Stdout_Logger logger(log::Log_Level::Info);
-
-    logger.info("Rendering expression: " + expr);
+    LOG_INFO("Rendering expression: " + expr);
 
     // Build font metrics
     font::Font_Metrics metrics;
     if (use_5x7) {
         metrics = font::Font_Metrics::make_5x7();
         if (!metrics.scale(scale)) {
-            logger.error("Failed to scale font metrics");
+            LOG_ERROR("Failed to scale font metrics");
             return;
         }
     } else {
@@ -508,7 +506,7 @@ void render_expression( const std::string&           expr,
     math::ast::Node::ptr_t ast = parser.parse();
 
     if (!ast) {
-        logger.error("Failed to parse expression");
+        LOG_ERROR("Failed to parse expression");
         return;
     }
 
@@ -520,7 +518,7 @@ void render_expression( const std::string&           expr,
     // Render to PNG
     render_box_to_png(box, metrics, output_path, width, height, debug_boxes, use_5x7, scale);
 
-    logger.info("Saved to: " + output_path.string());
+    LOG_INFO("Saved to: " + output_path.string());
 }
 
 /**
@@ -533,16 +531,14 @@ int main(int argc, char* argv[], char* envp[]) {
     // Configure logging
     config.configure_logging();
 
-    log::Stdout_Logger logger(config.log_severity());
-
     // Log configuration
-    logger.info(config.to_string());
+    LOG_INFO(config.to_string());
 
     try {
         // Load font if not using 5x7
         if (!config.use_5x7()) {
             if (!load_font(config.font_path())) {
-                logger.error("Failed to load font: " + config.font_path().string());
+                LOG_ERROR("Failed to load font: " + config.font_path().string());
                 return 1;
             }
         }
@@ -557,7 +553,7 @@ int main(int argc, char* argv[], char* envp[]) {
                            config.use_5x7() );
         return 0;
     } catch (const std::exception& e) {
-        logger.error(std::string("Error: ") + e.what());
+        LOG_ERROR(std::string("Error: ") + e.what());
         return 1;
     }
 }

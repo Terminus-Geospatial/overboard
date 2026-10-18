@@ -49,10 +49,10 @@ void Config::usage() const
 /****************************************/
 void Config::configure_logging()
 {
-    // Create stdout logger with configured severity
-    log::Stdout_Logger logger(m_log_severity);
+    // Initialize the singleton logger at the configured severity
+    log::Stdout_Logger::initialize(m_log_severity);
 
-    logger.debug( "Logging Configured\n", to_string() );
+    LOG_DEBUG( "Logging Configured\n", to_string() );
 }
 
 /****************************************/

@@ -133,4 +133,28 @@ void Serial_Port::close() {
     }
 }
 
+/****************************/
+/*   Discover serial port   */
+/****************************/
+std::filesystem::path discover_serial_port( const std::string& configured ) {
+    if (!configured.empty() && configured != "auto") {
+        return configured;
+    }
+    // Auto-discover: Linux exposes the device as ttyACM*/ttyUSB*
+    for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
+        const auto name = entry.path().filename().string();
+        if (name.starts_with("ttyACM") || name.starts_with("ttyUSB")) {
+            return entry.path();
+        }
+    }
+#if defined(__APPLE__)
+    for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
+        if (entry.path().filename().string().starts_with("cu.usbmodem")) {
+            return entry.path();
+        }
+    }
+#endif
+    return {};
+}
+
 } // namespace ovb::mpad

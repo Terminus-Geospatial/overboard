@@ -162,30 +162,16 @@ class Grid_Layout {
             core::Point<int> grid_origin,
             core::Point<int> cell_size) const;
 
-        /**
-         * @brief Create standard 5×6 calculator layout (all single cells)
-         * @return Grid layout with 30 keys in 5×6 grid
-         */
-        static Grid_Layout standard_5x6();
-
-        /**
-         * @brief Create KISNT MF34-style asymmetric layout
-         *
-         * Split layout with:
-         * - Left section: function keys and arrows
-         * - Right section: numpad with tall + and Enter keys
-         * - Visual gaps between sections
-         *
-         * @return Grid layout matching MF34 form factor
-         */
-        static Grid_Layout kn34();
-
     private:
+
+        /// @brief Number of columns in the grid
         int m_cols;
+        /// @brief Number of rows in the grid
         int m_rows;
+        /// @brief Vector of key positions
         std::vector<Key_Position> m_key_positions;
 
-        // Grid cell ownership: -1 = empty, >=0 = key index that owns this cell
+        /// @brief Grid cell ownership: -1 = empty, >=0 = key index that owns this cell
         std::vector<int> m_cell_owners;
 
         void rebuild_cell_map();

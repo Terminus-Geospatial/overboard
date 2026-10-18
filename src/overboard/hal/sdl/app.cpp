@@ -30,6 +30,7 @@
 #include <overboard/core/keymap.hpp>
 #include <overboard/core/settings_manager.hpp>
 #include <overboard/gui/app_view.hpp>
+#include <overboard/hal/app_common.hpp>
 #include <overboard/hal/display_config.hpp>
 #include <overboard/hal/sdl/input.hpp>
 #include <overboard/hal/sdl/keymap.hpp>
@@ -38,6 +39,10 @@
 #include <overboard/io/keyboard_config.hpp>
 #include <overboard/log/stdout_logger.hpp>
 #include <overboard/resources/embedded_json.hpp>
+
+#if OVB_HAS_MK20
+#include <overboard/hal/mk20/factory.hpp>
+#endif
 
 namespace ovb::hal::sdl {
 
@@ -78,6 +83,24 @@ std::unique_ptr<SDL_App> SDL_App::create( const core::Grid_Layout&     layout,
         app->m_screens = std::move(keyboard_config.screens);
         app->m_device_config = keyboard_config.device;
         app->m_layout_path = layout_path;
+
+        // Build input_key -> key_index mapping from keyboard.json
+        int bindings_count = 0;
+        int max_key_id = 0;
+        for (const auto& [key_id_str, key_def] : keyboard_config.keys) {
+            max_key_id = std::max(max_key_id, std::stoi(key_id_str));
+        }
+        app->m_key_input_map.assign(static_cast<size_t>(max_key_id + 1), core::Input_Key::NONE);
+        for (const auto& [key_id_str, key_def] : keyboard_config.keys) {
+            int key_id = std::stoi(key_id_str);
+            core::Input_Key input_key = core::string_to_input_key(key_def.input_key);
+            if (input_key != core::Input_Key::NONE) {
+                app->m_sdl_keymap.bind(input_key, key_id);
+                app->m_key_input_map[static_cast<size_t>(key_id)] = input_key;
+                bindings_count++;
+            }
+        }
+        LOG_TRACE("Input key mapping loaded: ", bindings_count, " keys");
     } catch (const std::exception& e) {
         std::cerr << "Failed to load keyboard config: " << e.what() << "\n";
         return nullptr;
@@ -87,30 +110,6 @@ std::unique_ptr<SDL_App> SDL_App::create( const core::Grid_Layout&     layout,
         return nullptr;
     }
     return app;
-}
-
-/****************************/
-/*   Resolve MK20 serial    */
-/****************************/
-static std::string resolve_mk20_port(const std::string& configured) {
-    if (!configured.empty() && configured != "auto") {
-        return configured;
-    }
-    // Auto-discover: Linux exposes the device as ttyACM*/ttyUSB*
-    for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
-        const auto name = entry.path().filename().string();
-        if (name.starts_with("ttyACM") || name.starts_with("ttyUSB")) {
-            return entry.path().string();
-        }
-    }
-#if defined(__APPLE__)
-    for (const auto& entry : std::filesystem::directory_iterator("/dev")) {
-        if (entry.path().filename().string().starts_with("cu.usbmodem")) {
-            return entry.path().string();
-        }
-    }
-#endif
-    return {};
 }
 
 /****************************************************/
@@ -138,20 +137,9 @@ bool SDL_App::init() {
 #if OVB_HAS_MK20
         // Connect the macropad before display creation — when it is
         // the presenter, the window only needs the LCD region.
-        if (m_device_config && m_device_config->type == "mk20") {
-            const auto port = resolve_mk20_port(m_device_config->port);
-            if (!port.empty()) {
-                auto device = std::make_shared<mpad::Device>(port);
-                if (device->is_open()) {
-                    m_mk20_input = std::make_unique<mk20::Mk20_Input>(device);
-                    m_mk20_device = std::move(device);
-                    LOG_INFO("SDL_App: MK20 macropad connected on ", port);
-                } else {
-                    LOG_WARN("SDL_App: MK20 configured but failed to open ", port);
-                }
-            } else {
-                LOG_WARN("SDL_App: MK20 configured but no serial device found");
-            }
+        m_mk20_device = mk20::connect_device(m_device_config, "SDL_App");
+        if (m_mk20_device) {
+            m_mk20_input = std::make_unique<mk20::Mk20_Input>(m_mk20_device);
         }
 #endif
 
@@ -179,30 +167,6 @@ bool SDL_App::init() {
             *m_system_info);
         LOG_TRACE("App_View created successfully");
 
-        // Build input_key -> key_index mapping from keyboard.json
-        LOG_TRACE("Building input_key mapping from keyboard.json");
-        try {
-            auto keyboard_config = io::load_keyboard_config(m_layout_path);
-            int bindings_count = 0;
-            int max_key_id = 0;
-            for (const auto& [key_id_str, key_def] : keyboard_config.keys) {
-                max_key_id = std::max(max_key_id, std::stoi(key_id_str));
-            }
-            m_key_input_map.assign(static_cast<size_t>(max_key_id + 1), core::Input_Key::NONE);
-            for (const auto& [key_id_str, key_def] : keyboard_config.keys) {
-                int key_id = std::stoi(key_id_str);
-                core::Input_Key input_key = core::string_to_input_key(key_def.input_key);
-                if (input_key != core::Input_Key::NONE) {
-                    m_sdl_keymap.bind(input_key, key_id);
-                    m_key_input_map[static_cast<size_t>(key_id)] = input_key;
-                    bindings_count++;
-                }
-            }
-            LOG_TRACE("Input key mapping loaded: " + std::to_string(bindings_count) + " keys");
-        } catch (const std::exception& e) {
-            std::cerr << "Warning: failed to build input_key mapping: " << e.what() << "\n";
-        }
-
         // Create SDL input handler for physical keyboard mapping
         LOG_TRACE("Creating SDL input handler");
         m_input = std::make_unique<SDL_Input>();
@@ -214,65 +178,28 @@ bool SDL_App::init() {
 
 #if OVB_HAS_MK20
         if (m_mk20_device) {
-            auto mk20_keymap = std::make_unique<mk20::Mk20_Keymap>(
-                m_mk20_device, m_layout, m_layers, m_screens,
-                [this](int key_index) { return m_view->get_active_panel_label(key_index); },
-                [this]() { return m_view->active_panel_name(); },
-                m_system_info.get());
-            m_keymap_view = mk20_keymap.get();
-            m_mk20_keymap = std::move(mk20_keymap);
+            m_mk20_keymap = mk20::make_keymap(m_mk20_device, m_layout, m_layers,
+                                              m_screens, *m_view, m_system_info.get());
+            m_keymap_view = m_mk20_keymap.get();
         }
 #endif
 
 #if SHOW_KEY_MAPPING
-        // Create interactive key mapping panel in main window
+        // Fall back to the on-screen key mapping panel
         // (KBD_HEIGHT > 0 means a keyboard region was reserved below the LCD)
         if (!m_keymap_view) {
-            if constexpr (hal::KBD_HEIGHT > 0) {
-                LOG_TRACE("Creating interactive Key_Mapping_Info panel in main window");
-                m_key_mapping_info = std::make_unique<gui::Key_Mapping_Info>(
-                    m_display->screen(), m_layout, m_layers,
-                    hal::FULL_WIDTH, hal::KBD_HEIGHT,
-                    [this](int key_index) { return m_view->get_active_panel_label(key_index); });
-                lv_obj_set_pos(m_key_mapping_info->container(), 0, hal::LCD_HEIGHT);
-
-                // Make it interactive - wire button clicks to the same handler as physical keys
-                m_key_mapping_info->set_click_callback([this](int key_index) {
-                    on_key_clicked(key_index, this);
-                });
+            m_key_mapping_info = make_keymap_panel(
+                m_display->screen(), m_layout, m_layers, *m_view,
+                [this](int key_index) { on_key_clicked(key_index, this); });
+            if (m_key_mapping_info) {
                 m_keymap_view = m_key_mapping_info.get();
             }
         }
 #endif
 
-        // Subscribe to layer changes
-        m_layers.on_layer_change([this]([[maybe_unused]] int layer_index) {
-            if (m_keymap_view) {
-                m_keymap_view->update_layer();
-            }
-        });
-
-        // Subscribe to panel changes to update keymap presenter labels
-        // and wire overlay callbacks for popup hotkey display
-        m_view->set_panel_change_callback([this]([[maybe_unused]] gui::I_Panel* panel) {
-            LOG_DEBUG("SDL_App: panel change callback, panel='", panel ? panel->name() : "null", "'");
-            if (m_keymap_view) {
-                LOG_DEBUG("SDL_App: calling update_layer");
-                m_keymap_view->update_layer();
-                LOG_DEBUG("SDL_App: update_layer done");
-            }
-            // Wire overlay callbacks for any panel that uses them
-            if (panel && m_keymap_view) {
-                panel->set_overlay_callbacks(
-                    [this](const std::string& title, const std::vector<gui::I_Panel::Overlay_Key_Desc>& keys) {
-                        m_keymap_view->push_overlay(title, keys);
-                    },
-                    [this]() {
-                        m_keymap_view->pop_overlay();
-                    });
-            }
-            LOG_DEBUG("SDL_App: panel change callback complete");
-        });
+        // Wire layer/panel-change callbacks onto the presenter
+        wire_keymap_view_callbacks(*m_view, m_layers,
+                                   [this]() { return m_keymap_view; });
 
         // Trigger callback manually for the initial panel (already activated during App_View construction)
         m_view->trigger_panel_change_callback();
@@ -398,60 +325,15 @@ void SDL_App::on_key_clicked(int key_index, void* user_data) {
 /*        Handle Keypress        */
 /*********************************/
 void SDL_App::handle_key(int key_index) {
-    // Flash the key on the active presenter for visual feedback
-    if (m_keymap_view) {
-        m_keymap_view->flash_key(key_index);
-    }
-
-    // Per-panel screens own their key table while active — a bound key
-    // resolves to panel jump, action, or text; an unbound one is inert.
-    if (const auto* screen = m_screens.find(m_view->active_panel_name())) {
-        if (const auto* key = screen->key_at(key_index)) {
-            LOG_DEBUG("Keypress: screen '", screen->name,
-                      "' key_index=", std::to_string(key_index));
-            if (!key->panel.empty()) {
-                m_view->push_panel(key->panel);
-            } else if (key->action != core::Action_Code::NONE) {
-                m_view->handle_input(key->action);
-            } else if (key->text != 0) {
-                m_view->handle_text(key->text);
-            }
-        }
-        return;
-    }
-
-    // Get action code first - if there's an action, route as action
-    const core::Action_Code code = m_layers.action_at(key_index);
-
-    // If there's a valid action (not NONE), always route as action
-    // This ensures EVAL, CURSOR_UP, etc. work correctly in menus
-    if (code != core::Action_Code::NONE) {
-        LOG_DEBUG("Keypress: key_index=" + std::to_string(key_index) +
-                  ", action_code=" + std::to_string(static_cast<int>(code)) +
-                  " (" + core::action_code_to_display(code) + ")");
-        m_view->handle_input(code);
-        return;
-    }
-
-    // No action mapped - check if key has an Input_Key mapping (e.g. F-keys)
-    auto slot = static_cast<size_t>(key_index);
+    // Resolve the key's Input_Key for NONE-action passthrough
+    std::optional<core::Input_Key> input_key;
+    const auto slot = static_cast<size_t>(key_index);
     if (slot < m_key_input_map.size() && m_key_input_map[slot] != core::Input_Key::NONE) {
-        LOG_DEBUG("Keypress: key_index=" + std::to_string(key_index) + " -> Input_Key passthrough");
-        m_view->handle_input_key(m_key_input_map[slot]);
-        return;
+        input_key = m_key_input_map[slot];
     }
 
-    // Fall back to text from label
-    const std::string label = m_layers.label_at(key_index);
-    if (label.length() == 1) {
-        char32_t text_char = static_cast<char32_t>(label[0]);
-        LOG_DEBUG("Keypress: key_index=" + std::to_string(key_index) + ", label='" + label + "' -> text");
-        m_view->handle_text(text_char);
-        return;
-    }
-
-    // No action and no printable text - log and ignore
-    LOG_DEBUG("Keypress: key_index=" + std::to_string(key_index) + ", no action, label='" + label + "' -> ignored");
+    dispatch_layout_key(m_layers, m_screens, *m_view, m_keymap_view,
+                        key_index, input_key);
 }
 
 /****************************************/

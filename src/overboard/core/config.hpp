@@ -29,7 +29,7 @@ class Config {
 
         /// @brief Default config folder path (set by target-specific CMakeLists.txt)
         #ifndef DEFAULT_CONFIG_PATH
-        #define DEFAULT_CONFIG_PATH "data/configs/mf/"
+        #define DEFAULT_CONFIG_PATH "data/configs/mk20/"
         #endif
         static constexpr std::string_view DEFAULT_CONFIG_PATH_STR  = DEFAULT_CONFIG_PATH;
 

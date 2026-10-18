@@ -9,15 +9,10 @@
 #include "os_utils.hpp"
 
 // C++ Standard Libraries
-#include <sys/statvfs.h>
-#include <unistd.h>
-
-#include <cerrno>
-#include <cstring>
-#include <fstream>
 #include <vector>
 
 // Project Libraries
+#include <overboard/hal/host_info.hpp>
 #include <overboard/log/stdout_logger.hpp>
 
 namespace ovb::hal::sdl {
@@ -26,8 +21,7 @@ namespace ovb::hal::sdl {
 /*     Constructor          */
 /****************************/
 SDL_System_Info::SDL_System_Info() {
-    LOG_DEBUG("SDL_System_Info initialized (macOS=", std::to_string(is_macos),
-              ", Linux=", std::to_string(is_linux), ")");
+    LOG_DEBUG("SDL_System_Info initialized (macOS=", std::to_string(is_macos), ")");
 }
 
 /****************************/
@@ -52,7 +46,7 @@ System_Info SDL_System_Info::collect_info() {
     System_Info info;
 
     // CPU temperature
-    info.cpu_temp_c = read_cpu_temp();
+    info.cpu_temp_c = read_host_cpu_temp();
 
     // Battery - not available on typical dev machines
     // Could parse `pmset -g batt` on macOS, but it's slow and requires shelling out
@@ -60,7 +54,7 @@ System_Info SDL_System_Info::collect_info() {
     info.battery_percent   = std::nullopt;
 
     // Storage
-    info.storage = read_storage();
+    info.storage = read_storage_stats(".");
 
     // USB - not meaningfully queryable in SDL context
     info.usb = std::nullopt;
@@ -105,13 +99,7 @@ System_Info SDL_System_Info::collect_info() {
 /*     Capability Checks    */
 /****************************/
 bool SDL_System_Info::has_cpu_temp() const {
-    // On Linux, check if thermal zone exists
-    if (is_linux) {
-        return access("/sys/class/thermal/thermal_zone0/temp", R_OK) == 0;
-    }
-    // On macOS, CPU temp is difficult to query reliably without SMC
-    // We'll return false and rely on mock/powermetrics if needed
-    return false;
+    return has_host_cpu_temp();
 }
 
 /************************************************/
@@ -178,60 +166,6 @@ void SDL_System_Info::set_wifi_enabled(bool enable) {
 /*********************************************/
 std::vector<std::string> SDL_System_Info::scan_wifi_networks() {
     return ovb::hal::sdl::scan_wifi_networks();
-}
-
-/****************************/
-/*     Read CPU Temp        */
-/****************************/
-std::optional<float> SDL_System_Info::read_cpu_temp() {
-    if (is_linux) {
-        // Try standard Linux thermal zone
-        std::ifstream temp_file("/sys/class/thermal/thermal_zone0/temp");
-        if (temp_file.is_open()) {
-            int temp_millidegrees;
-            temp_file >> temp_millidegrees;
-            if (temp_file.good()) {
-                return static_cast<float>(temp_millidegrees) / 1000.0f;  // Convert to Celsius
-            }
-        }
-
-        // Try alternative location (some systems)
-        temp_file.open("/sys/class/hwmon/hwmon0/temp1_input");
-        if (temp_file.is_open()) {
-            int temp_millidegrees;
-            temp_file >> temp_millidegrees;
-            if (temp_file.good()) {
-                return static_cast<float>(temp_millidegrees) / 1000.0f;
-            }
-        }
-    }
-
-    #if defined(__APPLE__)
-    // On macOS, we could shell out to `powermetrics` but it's slow and requires sudo
-    // For now, return nullopt - the UI can show "N/A" or use a mock value
-    #endif
-
-    return std::nullopt;
-}
-
-/****************************/
-/*     Read Storage         */
-/****************************/
-std::optional<System_Info::Storage> SDL_System_Info::read_storage() {
-    struct statvfs stat;
-
-    // Get current working directory filesystem stats
-    if (statvfs(".", &stat) != 0) {
-        LOG_WARN("SDL_System_Info: failed to get storage stats: ", std::strerror(errno));
-        return std::nullopt;
-    }
-
-    System_Info::Storage storage;
-    storage.total_bytes = stat.f_blocks * stat.f_frsize;
-    storage.free_bytes  = stat.f_bfree * stat.f_frsize;
-    storage.used_bytes  = storage.total_bytes - storage.free_bytes;
-
-    return storage;
 }
 
 } // namespace ovb::hal::sdl

@@ -14,9 +14,22 @@
 #include <cstddef>
 #include <filesystem>
 #include <span>
+#include <string>
 #include <vector>
 
 namespace ovb::mpad {
+
+/**
+ * @brief Resolve a serial device path from a configured value.
+ *
+ * Returns the configured path verbatim when set; otherwise scans
+ * /dev for common USB-serial nodes (ttyACM*, ttyUSB* on Linux;
+ * cu.usbmodem* on macOS).
+ *
+ * @param configured Device path, "auto", or empty
+ * @return Resolved device path, or empty when nothing was found
+ */
+std::filesystem::path discover_serial_port( const std::string& configured );
 
 /**
  * @brief RAII wrapper around a POSIX serial file descriptor.
@@ -35,7 +48,9 @@ class Serial_Port {
         explicit Serial_Port( const std::filesystem::path& path,
                               unsigned baud = 115200 );
 
-        /// Close the port
+        /**
+         * @brief Close the port
+         */
         ~Serial_Port();
 
         Serial_Port( const Serial_Port& )            = delete;
@@ -43,7 +58,9 @@ class Serial_Port {
         Serial_Port( Serial_Port&& )                 = delete;
         Serial_Port& operator=( Serial_Port&& )      = delete;
 
-        /// @brief True while the port is open
+        /**
+         * @brief True while the port is open
+         */
         bool is_open() const;
 
         /**
@@ -60,10 +77,14 @@ class Serial_Port {
          */
         bool write( std::span<const std::byte> data );
 
-        /// @brief Flush output buffers
+        /**
+         * @brief Flush output buffers
+         */
         void flush();
 
-        /// @brief Close the port (idempotent)
+        /**
+         * @brief Close the port (idempotent)
+         */
         void close();
 
     private:

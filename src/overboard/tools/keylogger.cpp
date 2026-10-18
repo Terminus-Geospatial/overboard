@@ -47,17 +47,17 @@ static void signal_handler(int) {
  * @brief Main keylogger loop
  */
 int main(int /*argc*/, char* /*argv*/[]) {
-    ovb::log::Stdout_Logger logger(ovb::log::Log_Level::Info);
+    ovb::log::Stdout_Logger::initialize(ovb::log::Log_Level::Info);
 
     // Set up signal handlers for clean exit
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
-    logger.info("=== Keylogger Starting ===");
+    LOG_INFO("=== Keylogger Starting ===");
 
 #if defined(TARGET_SDL)
-    logger.info("Using SDL input");
-    logger.info("Press keys to see SDL scancodes");
+    LOG_INFO("Using SDL input");
+    LOG_INFO("Press keys to see SDL scancodes");
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         std::fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
@@ -79,8 +79,8 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     auto input = std::make_unique<ovb::hal::sdl::SDL_Input>();
 #else
-    logger.info("Using Linux input (evdev)");
-    logger.info("Reading from /dev/input/event* devices");
+    LOG_INFO("Using Linux input (evdev)");
+    LOG_INFO("Reading from /dev/input/event* devices");
 
     // Auto-detect keyboard devices
     std::vector<std::string> device_paths;
@@ -91,8 +91,8 @@ int main(int /*argc*/, char* /*argv*/[]) {
     auto input = std::make_unique<ovb::hal::pi_zero::Linux_Input>(device_paths);
 #endif
 
-    logger.info("Press Ctrl+C to exit");
-    logger.info("===========================");
+    LOG_INFO("Press Ctrl+C to exit");
+    LOG_INFO("===========================");
 
     bool running = true;
     while (running && !g_quit && !input->should_quit()) {
@@ -113,7 +113,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
                 msg = "TEXT: codepoint=" + std::to_string(event.codepoint);
             }
 
-            logger.info(msg);
+            LOG_INFO(msg);
         }
 
 #if defined(TARGET_SDL)
@@ -132,7 +132,7 @@ int main(int /*argc*/, char* /*argv*/[]) {
 #endif
     }
 
-    logger.info("=== Keylogger Exiting ===");
+    LOG_INFO("=== Keylogger Exiting ===");
 
 #if defined(TARGET_SDL)
     SDL_DestroyWindow(window);

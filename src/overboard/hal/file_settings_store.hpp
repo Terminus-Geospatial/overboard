@@ -1,46 +1,52 @@
 /**
- * @file    settings_store.hpp
+ * @file    file_settings_store.hpp
  * @author  Marvin Smith
- * @date    2026-06-13
+ * @date    2026-10-17
  *
- * @brief   SDL platform settings storage implementation
+ * @brief   Shared filesystem-backed settings storage
  *
- * Uses host filesystem for settings storage:
- * - Linux: $XDG_CONFIG_HOME/kbd_calc/settings.toml or ~/.config/kbd_calc/settings.toml
- * - macOS: ~/Library/Application Support/kbd_calc/settings.toml
- * - Windows: %APPDATA%/kbd_calc/settings.toml
+ * Single implementation used by the SDL, WASM, and Pi Zero targets.
+ * The caller supplies the config directory (platform policy lives in
+ * Settings_Store_Factory) and an optional defaults file whose contents
+ * are loaded first and overlaid by the user file.
  */
 #pragma once
 
 // C++ Standard Libraries
 #include <filesystem>
+#include <optional>
 #include <string>
 
 // Project Libraries
 #include <overboard/hal/i_settings_store.hpp>
 
-namespace ovb::hal::sdl {
+namespace ovb::hal {
 
 /**
- * @brief SDL platform settings store
+ * @brief File-based TOML settings store
  *
- * File-based TOML storage using platform-appropriate paths.
- * Suitable for SDL, Pi Zero, and PICO-SDL targets.
+ * Writes a single TOML file under a caller-provided config directory.
+ * When a defaults path is supplied, its contents seed the tree on load
+ * and the user file is merged over it.
  */
-class SDL_Settings_Store : public I_Settings_Store {
+class File_Settings_Store : public I_Settings_Store {
+
     public:
+
         /**
          * @brief Constructor
-         * @param app_name Application name for config directory (default: "kbd_calc")
+         * @param config_dir Directory holding the settings file
          * @param file_name Settings filename (default: "settings.toml")
+         * @param defaults_path Optional TOML file merged beneath user settings
          */
-        explicit SDL_Settings_Store(
-            const std::string& app_name = "kbd_calc",
-            const std::string& file_name = "settings.toml"
+        explicit File_Settings_Store(
+            const std::filesystem::path& config_dir,
+            const std::string& file_name = "settings.toml",
+            const std::optional<std::filesystem::path>& defaults_path = std::nullopt
         );
 
         /**
-         * @brief Load settings from file
+         * @brief Load settings (defaults first, user file overlaid)
          */
         bool load(Settings_Tree& out_tree) override;
 
@@ -71,11 +77,6 @@ class SDL_Settings_Store : public I_Settings_Store {
 
     private:
         /**
-         * @brief Determine platform config directory
-         */
-        std::filesystem::path get_platform_config_dir(const std::string& app_name);
-
-        /**
          * @brief Ensure config directory exists
          */
         bool ensure_config_dir();
@@ -85,6 +86,9 @@ class SDL_Settings_Store : public I_Settings_Store {
 
         /// @brief Settings file path
         std::filesystem::path m_settings_file;
+
+        /// @brief Optional defaults file merged beneath user settings
+        std::optional<std::filesystem::path> m_defaults_path;
 };
 
-} // namespace ovb::hal::sdl
+} // namespace ovb::hal
